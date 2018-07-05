@@ -1,0 +1,7 @@
+syntax: glob
+*.pyc
+.coverage
+.pytest_cache
+*.cpp
+*.so
+*.o
