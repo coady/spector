@@ -1,5 +1,11 @@
+from distutils.extension import Extension
 from distutils.core import setup
 from Cython.Build import cythonize
+
+ext_module = Extension('spector.vector',
+                       sources=['spector/vector.pyx'],
+                       extra_compile_args=['-std=c++11'],
+                       extra_link_args=['-std=c++11'])
 
 setup(
     name='spector',
@@ -10,7 +16,7 @@ setup(
     url='https://bitbucket.org/coady/spector',
     license='Apache Software License',
     packages=['spector'],
-    ext_modules=cythonize('spector/vector.pyx', language='c++'),
+    ext_modules=cythonize([ext_module], language='c++'),
     keywords='sparse array vector matrix numpy scipy',
     classifiers=[
         'Development Status :: 1 - Planning',
