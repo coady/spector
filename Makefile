@@ -9,4 +9,3 @@ check: all
 clean:
 	hg st -in | xargs rm
 	rm -rf build dist spector.egg-info
-

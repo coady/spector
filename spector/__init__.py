@@ -1,1 +1,1 @@
-from .vector import vector  # noqa
+from .vector import indices, vector  # noqa

@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from spector import vector
+from spector import indices, vector
 
 
 def test_defaults():
@@ -37,3 +37,28 @@ def test_types():
     assert np.array_equal(vec.values(), np.array([10, 5, 0]))
     vec.update(vector(range(3, 6)))
     assert sorted(vec.keys()) == list(range(6))
+
+
+def test_indices():
+    ind = indices()
+    assert str(ind) == 'indices([])'
+    assert len(ind) == 0
+    assert 0 not in ind
+    assert list(ind) == []
+
+    assert ind.add(0)
+    assert not ind.add(0)
+    assert str(ind) == 'indices([0])'
+    assert len(ind) == 1
+    assert 0 in ind
+    assert list(ind) == [0]
+
+    assert ind.discard(0)
+    assert not ind.discard(0)
+    ind.update(range(3))
+    assert set(ind) == set(indices(np.array(ind))) == {0, 1, 2}
+    np.array(ind).sum() == 3
+    ind.update(indices([3]))
+    assert 3 in ind
+    ind.clear()
+    assert not ind

@@ -1,10 +1,71 @@
 # distutils: language=c++
-# cython: linetrace=True
 import collections
 import numpy as np
 from libcpp.unordered_map cimport unordered_map
+from libcpp.unordered_set cimport unordered_set
 
 dtype = 'i{}'.format(sizeof(Py_ssize_t))
+
+
+cdef class indices:
+    """A sparse boolean array, i.e., set of indices.
+
+    Provides a memory efficient set interface, with optimized conversion between numpy arrays.
+
+    :param keys: optional iterable of keys
+    """
+    cdef unordered_set[Py_ssize_t] data
+
+    def __init__(self, keys=()):
+        self.update(keys)
+
+    def __repr__(self):
+        return 'indices({})'.format(np.array(self))
+
+    def __len__(self):
+        return self.data.size()
+
+    def __contains__(self, Py_ssize_t key):
+        return self.data.count(key)
+
+    def __iter__(self):
+        return iter(np.array(self))
+
+    def add(self, Py_ssize_t key):
+        return self.data.insert(key).second
+
+    def discard(self, Py_ssize_t key):
+        return self.data.erase(key)
+
+    def clear(self):
+        self.data.clear()
+
+    def __array__(self):
+        """Return keys as numpy array."""
+        result = np.empty(len(self), dtype)
+        cdef Py_ssize_t [:] arr = result
+        cdef Py_ssize_t i = 0
+        for p in self.data:
+            arr[i] = p
+            i += 1
+        return result
+
+    cdef fromindices(self, indices other):
+        for i in other.data:
+            self.data.insert(i)
+
+    cdef fromarray(self, Py_ssize_t [:] keys):
+        cdef Py_ssize_t i
+        for i in range(keys.size):
+            self.data.insert(keys[i])
+
+    def update(self, keys):
+        """Update from indices or keys."""
+        if isinstance(keys, indices):
+            return self.fromindices(keys)
+        if not isinstance(keys, np.ndarray):
+            keys = np.fromiter(keys, dtype)
+        self.fromarray(keys)
 
 
 cdef class vector:
@@ -12,9 +73,9 @@ cdef class vector:
 
     Provides a memory efficient dict interface, with optimized conversion between numpy arrays.
 
-    :params keys: optional iterable of keys
-    :params values: optional scalar or iterable of values
-    :params dtype: optional dtype inferred from values
+    :param keys: optional iterable of keys
+    :param values: optional scalar or iterable of values
+    :param dtype: optional dtype inferred from values
     """
     cdef public object dtype
     cdef unordered_map[Py_ssize_t, double] data
@@ -75,7 +136,7 @@ cdef class vector:
             self.data[p.first] = p.second
 
     cdef fromarrays(self, Py_ssize_t [:] keys, double [:] values):
-        cdef Py_ssize_t i = 0
+        cdef Py_ssize_t i
         for i in range(min(keys.size, values.size)):
             self.data[keys[i]] = values[i]
 
