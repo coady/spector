@@ -62,3 +62,22 @@ def test_indices():
     assert 3 in ind
     ind.clear()
     assert not ind
+
+
+def test_dense():
+    arr = np.zeros(4, bool)
+    arr[0] = arr[2] = True
+    ind = indices.fromdense(arr)
+    assert set(ind) == {0, 2}
+    assert np.array_equal(ind.todense(), arr[:3])
+    assert np.array_equal(ind.todense(4), arr)
+    with pytest.raises(IndexError):
+        ind.todense(2)
+
+    arr = np.array(range(4))
+    vec = vector.fromdense(arr)
+    assert dict(vec) == {1: 1, 2: 2, 3: 3}
+    assert np.array_equal(vec.todense(), arr)
+    assert list(vec.todense(5)) == [0, 1, 2, 3, 0]
+    with pytest.raises(IndexError):
+        vec.todense(3)

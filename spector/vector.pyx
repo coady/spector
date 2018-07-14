@@ -67,6 +67,18 @@ cdef class indices:
             keys = np.fromiter(keys, dtype)
         self.fromarray(keys)
 
+    @classmethod
+    def fromdense(cls, values):
+        """Return indices from a dense array representation."""
+        return cls(*np.nonzero(values))
+
+    def todense(self, size=None):
+        """Return a dense array representation of indices."""
+        keys = np.array(self)
+        result = np.zeros(keys.max() + 1 if size is None else size, bool)
+        result[keys] = True
+        return result
+
 
 cdef class vector:
     """A sparse array of index keys mapped to numeric values.
@@ -151,3 +163,16 @@ cdef class vector:
         if not isinstance(values, np.ndarray):
             values = np.fromiter(values, self.dtype)
         self.fromarrays(keys, values.astype(float))
+
+    @classmethod
+    def fromdense(cls, values):
+        """Return vector from a dense array representation."""
+        keys, = np.nonzero(values)
+        return cls(keys, values[keys])
+
+    def todense(self, size=None):
+        """Return a dense array representation of vector."""
+        keys = self.keys()
+        result = np.zeros(keys.max() + 1 if size is None else size, self.dtype)
+        result[keys] = self.values()
+        return result
