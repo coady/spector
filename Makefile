@@ -2,7 +2,7 @@ all:
 	python3 setup.py build_ext -i
 
 check: all
-	python3 setup.py $@ -mrs
+	python3 setup.py $@ -ms
 	flake8
 	pytest --cov
 

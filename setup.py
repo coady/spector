@@ -1,5 +1,4 @@
-from distutils.extension import Extension
-from distutils.core import setup
+from setuptools import setup, Extension
 from Cython.Build import cythonize
 
 ext_module = Extension('spector.vector',
@@ -11,6 +10,8 @@ setup(
     name='spector',
     version='0.0',
     description='Sparse vectors.',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     author='Aric Coady',
     author_email='aric.coady@gmail.com',
     url='https://bitbucket.org/coady/spector',
