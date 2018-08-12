@@ -20,8 +20,9 @@ setup(
     ext_modules=cythonize([ext_module], language='c++'),
     keywords='sparse array vector matrix numpy scipy',
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2',

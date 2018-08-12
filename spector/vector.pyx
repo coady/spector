@@ -29,7 +29,8 @@ cdef class indices:
         return self.data.count(key)
 
     def __iter__(self):
-        return iter(np.array(self))
+        for k in self.data:
+            yield k
 
     def add(self, Py_ssize_t key):
         return self.data.insert(key).second
@@ -45,14 +46,14 @@ cdef class indices:
         result = np.empty(len(self), dtype)
         cdef Py_ssize_t [:] arr = result
         cdef Py_ssize_t i = 0
-        for p in self.data:
-            arr[i] = p
+        for k in self.data:
+            arr[i] = k
             i += 1
         return result
 
     cdef fromindices(self, indices other):
-        for i in other.data:
-            self.data.insert(i)
+        for k in other.data:
+            self.data.insert(k)
 
     cdef fromarray(self, Py_ssize_t [:] keys):
         cdef Py_ssize_t i
@@ -115,7 +116,8 @@ cdef class vector:
         return self.data.count(key)
 
     def __iter__(self):
-        return iter(self.keys())
+        for p in self.data:
+            yield p.first
 
     def items(self):
         return zip(self.keys(), self.values())
