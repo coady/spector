@@ -33,10 +33,34 @@ cdef class indices:
         for k in self.data:
             yield k
 
+    cdef issubset(self, indices other):
+        for k in self.data:
+            if not other.data.count(k):
+                return False
+        return True
+
+    def __eq__(self, other):
+        return isinstance(other, indices) and len(self) == len(other) and self.issubset(other)
+
+    def __le__(self, indices other):
+        return len(self) <= len(other) and self.issubset(other)
+
+    def __lt__(self, indices other):
+        return len(self) < len(other) and self.issubset(other)
+
+    def isdisjoint(self, indices other):
+        """Return whether two indices have a null intersetction."""
+        for k in self.data:
+            if other.data.count(k):
+                return False
+        return True
+
     def add(self, Py_ssize_t key):
+        """Add an index key."""
         return self.data.insert(key).second
 
     def discard(self, Py_ssize_t key):
+        """Remove an index key, if present."""
         return self.data.erase(key)
 
     def clear(self):

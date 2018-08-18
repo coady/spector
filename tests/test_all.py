@@ -64,6 +64,23 @@ def test_indices():
     assert not ind
 
 
+def test_cmp():
+    ind = indices([0, 1])
+    assert ind == ind == indices([0, 1]) == indices([1, 0])
+    assert ind != {} and not (ind == {})
+    assert not (ind != ind)
+    assert ind != indices([0, 2])
+    assert not (ind <= indices([0]))
+    assert ind <= ind
+    assert not ind < ind
+    assert ind < indices([0, 1, 2])
+    with pytest.raises(TypeError):
+        ind < None
+    with pytest.raises(TypeError):
+        ind <= None
+    assert not ind.isdisjoint(indices([0])) and ind.isdisjoint(indices([2]))
+
+
 def test_dense():
     arr = np.zeros(4, bool)
     arr[0] = arr[2] = True
