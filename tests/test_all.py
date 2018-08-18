@@ -81,6 +81,26 @@ def test_cmp():
     assert not ind.isdisjoint(indices([0])) and ind.isdisjoint(indices([2]))
 
 
+def test_sets():
+    x, y = indices([0, 1]), indices([1, 2])
+    assert x | y == indices([0, 1, 2])
+    assert x & y == indices([1])
+    assert x - y == indices([0])
+    assert x ^ y == indices([0, 2])
+
+    z = x
+    z ^= y
+    assert z is x and z == indices([0, 2])
+    z |= y
+    assert z is x and z == indices([0, 1, 2])
+    z -= y
+    assert z is x and z == indices([0])
+    z -= y  # smaller z optimized
+    assert z is x and z == indices([0])
+    z &= y
+    assert z is x and z == indices()
+
+
 def test_dense():
     arr = np.zeros(4, bool)
     arr[0] = arr[2] = True

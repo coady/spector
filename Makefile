@@ -13,4 +13,5 @@ html: spector/vector.pyx
 
 clean:
 	hg st -in | xargs rm
-	rm -rf build dist spector.egg-info
+	rm -rf build dist spector.egg-info htmlcov
+	rm -f spector/*.c spector/*.html

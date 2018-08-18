@@ -78,10 +78,6 @@ cdef class indices:
             i += 1
         return result
 
-    cdef fromindices(self, indices other):
-        for k in other.data:
-            self.data.insert(k)
-
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cdef fromarray(self, Py_ssize_t [:] keys):
@@ -90,12 +86,62 @@ cdef class indices:
             self.data.insert(keys[i])
 
     def update(self, keys):
-        """Update from indices or keys."""
+        """Update from indices, array, or iterable."""
         if isinstance(keys, indices):
-            return self.fromindices(keys)
-        if not isinstance(keys, np.ndarray):
-            keys = np.fromiter(keys, dtype)
-        self.fromarray(keys)
+            self |= keys
+        elif isinstance(keys, np.ndarray):
+            self.fromarray(keys)
+        else:
+            for key in keys:
+                self.data.insert(key)
+
+    def __ior__(self, indices other):
+        for k in other.data:
+            self.data.insert(k)
+        return self
+
+    def __or__(self, indices other):
+        return type(self)(self).__ior__(other)
+
+    def __ixor__(self, indices other):
+        for k in other.data:
+            if not self.data.insert(k).second:
+                self.data.erase(k)
+        return self
+
+    def __xor__(self, indices other):
+        return type(self)(self).__ixor__(other)
+
+    def __and__(indices self, indices other):
+        if len(other) < len(self):
+            return other & self
+        cdef indices result = type(self)()
+        for k in self.data:
+            if other.data.count(k):
+                result.data.insert(k)
+        return result
+
+    def __iand__(self, indices other):
+        cdef indices result = (self & other)
+        self.data = result.data
+        return self
+
+    def __sub__(indices self, indices other):
+        cdef indices result = type(self)()
+        for k in self.data:
+            if not other.data.count(k):
+                result.data.insert(k)
+        return result
+
+    def __isub__(self, indices other):
+        cdef indices result
+        if len(other) < len(self):
+            for k in other.data:
+                self.data.erase(k)
+        else:
+            result = (self - other)
+            self.data = result.data
+        return self
 
     @classmethod
     def fromdense(cls, values):
