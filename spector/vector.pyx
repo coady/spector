@@ -3,6 +3,7 @@ import collections
 import numpy as np
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
+cimport cython
 
 dtype = 'i{}'.format(sizeof(Py_ssize_t))
 
@@ -41,6 +42,8 @@ cdef class indices:
     def clear(self):
         self.data.clear()
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     def __array__(self):
         """Return keys as numpy array."""
         result = np.empty(len(self), dtype)
@@ -55,6 +58,8 @@ cdef class indices:
         for k in other.data:
             self.data.insert(k)
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     cdef fromarray(self, Py_ssize_t [:] keys):
         cdef Py_ssize_t i
         for i in range(keys.size):
@@ -125,6 +130,8 @@ cdef class vector:
     def clear(self):
         self.data.clear()
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     def keys(self):
         """Return keys as numpy array."""
         result = np.empty(len(self), dtype)
@@ -135,6 +142,8 @@ cdef class vector:
             i += 1
         return result
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     def values(self):
         """Return values as numpy array."""
         result = np.empty(len(self), float)
@@ -149,6 +158,8 @@ cdef class vector:
         for p in other.data:
             self.data[p.first] = p.second
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     cdef fromarrays(self, Py_ssize_t [:] keys, double [:] values):
         cdef Py_ssize_t i
         for i in range(min(keys.size, values.size)):
