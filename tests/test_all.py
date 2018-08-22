@@ -10,6 +10,7 @@ def test_defaults():
     assert len(vec) == 3
     assert np.array_equal(vec.keys(), np.array([2, 1, 0]))
     assert np.array_equal(vec.values(), np.array([1, 1, 1]))
+    assert np.array_equal(vec.values(), np.array(vec))
     assert vec[0] == 1
     vec[0] += 1.5
     assert vec[0] == 2
@@ -29,12 +30,12 @@ def test_defaults():
 def test_types():
     vec = vector(range(3), 1.0)
     assert np.array_equal(vec.values(), np.array([1.0, 1.0, 1.0]))
-    vec = vector(range(3), [0, 5], dtype=int)
+    vec = vector(vec.keys(), 1.0)
+    assert np.array_equal(vec.values(), np.array([1.0, 1.0, 1.0]))
+    vec = vector({0: 0, 1: 5}, dtype=int)
     assert np.array_equal(vec.values(), np.array([5, 0]))
     vec = vector(range(3), dtype=float)
     assert np.array_equal(vec.values(), np.array([1.0, 1.0, 1.0]))
-    vec = vector(range(3), np.array([0, 5, 10]))
-    assert np.array_equal(vec.values(), np.array([10, 5, 0]))
     vec.update(vector(range(3, 6)))
     assert sorted(vec.keys()) == list(range(6))
 
@@ -80,6 +81,14 @@ def test_cmp():
         ind <= None
     assert not ind.isdisjoint(indices([0])) and ind.isdisjoint(indices([2]))
 
+    vec = vector(range(3))
+    assert vec == vec == vector(range(3))
+    assert vec != vector(range(3), 2)
+    assert vec != vector(range(2))
+    assert vec != vector(range(4))
+    with pytest.raises(TypeError):
+        vec <= vec
+
 
 def test_sets():
     x, y = indices([0, 1]), indices([1, 2])
@@ -95,10 +104,9 @@ def test_sets():
     assert z is x and z == indices([0, 1, 2])
     z -= y
     assert z is x and z == indices([0])
-    z -= y  # smaller z optimized
-    assert z is x and z == indices([0])
     z &= y
     assert z is x and z == indices()
+    assert not y & z
 
 
 def test_dense():
@@ -118,3 +126,38 @@ def test_dense():
     assert list(vec.todense(5)) == [0, 1, 2, 3, 0]
     with pytest.raises(IndexError):
         vec.todense(3)
+
+
+def test_math():
+    vec = vector(range(3), 1.0)
+    vec += 1
+    assert vec == vector(range(3), 2.0)
+    vec -= 1
+    assert vec == vector(range(3), 1.0)
+    vec *= 2
+    assert vec == vector(range(3), 2.0)
+    vec **= 3
+    assert vec == vector(range(3), 8.0)
+    vec /= 2
+    assert vec == vector(range(3), 4.0)
+
+    vec += vector([3], 4.0)
+    assert vec == vector(range(4), 4.0)
+    vec *= vector([3, 4], 2.0)
+    assert vec == vector([3], 8.0)
+    vec -= vec
+    assert vec == vector([3], 0.0)
+
+    vec = vector(range(3), 1.0)
+    assert vec + 1 == vector(range(3), 2.0)
+    assert vec - 1 == vector(range(3), 0.0)
+    assert vec * 2 == vector(range(3), 2.0)
+    assert (vec + 1) ** 3 == vector(range(3), 8.0)
+    assert (vec + 1) / 2 == vector(range(3), 1.0)
+    with pytest.raises(TypeError):
+        pow(vec, 2, 2)
+
+    assert vec + vector([2, 3], 2.0) == vector({0: 1.0, 1: 1.0, 2: 3.0, 3: 2.0})
+    assert vec - vector([2, 3], 1.0) == vector({0: 1.0, 1: 1.0, 2: 0.0, 3: -1.0})
+    other = vector([2, 3], 2.0)
+    assert vec * other == other * vec == vector({2: 2.0})

@@ -4,6 +4,10 @@ import numpy as np
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
 cimport cython
+try:
+    from future_builtins import zip
+except ImportError:
+    pass
 
 dtype = 'i{}'.format(sizeof(Py_ssize_t))
 
@@ -64,6 +68,7 @@ cdef class indices:
         return self.data.erase(key)
 
     def clear(self):
+        """Remove all indices."""
         self.data.clear()
 
     @cython.boundscheck(False)
@@ -112,6 +117,12 @@ cdef class indices:
     def __xor__(self, indices other):
         return type(self)(self).__ixor__(other)
 
+    def __iand__(self, indices other):
+        for k in self.data:
+            if not other.data.count(k):
+                self.data.erase(k)
+        return self
+
     def __and__(indices self, indices other):
         if len(other) < len(self):
             return other & self
@@ -121,9 +132,9 @@ cdef class indices:
                 result.data.insert(k)
         return result
 
-    def __iand__(self, indices other):
-        cdef indices result = (self & other)
-        self.data = result.data
+    def __isub__(self, indices other):
+        for k in other.data:
+            self.data.erase(k)
         return self
 
     def __sub__(indices self, indices other):
@@ -132,16 +143,6 @@ cdef class indices:
             if not other.data.count(k):
                 result.data.insert(k)
         return result
-
-    def __isub__(self, indices other):
-        cdef indices result
-        if len(other) < len(self):
-            for k in other.data:
-                self.data.erase(k)
-        else:
-            result = (self - other)
-            self.data = result.data
-        return self
 
     @classmethod
     def fromdense(cls, values):
@@ -159,7 +160,7 @@ cdef class indices:
 cdef class vector:
     """A sparse array of index keys mapped to numeric values.
 
-    Provides a memory efficient dict interface, with optimized conversion between numpy arrays.
+    Provides a memory efficient Counter interface, with optimized conversion between numpy arrays.
 
     :param keys: optional iterable of keys
     :param values: optional scalar or iterable of values
@@ -194,10 +195,21 @@ cdef class vector:
         for p in self.data:
             yield p.first
 
+    cdef issubset(self, vector other):
+        for p in self.data:
+            if p.second != other.data[p.first]:
+                return False
+        return True
+
+    def __eq__(self, other):
+        return isinstance(other, vector) and len(self) == len(other) and self.issubset(other)
+
     def items(self):
+        """Return zipped keys and values."""
         return zip(self.keys(), self.values())
 
     def clear(self):
+        """Remove all items."""
         self.data.clear()
 
     @cython.boundscheck(False)
@@ -223,29 +235,102 @@ cdef class vector:
             arr[i] = p.second
             i += 1
         return result.astype(self.dtype)
-
-    cdef fromvector(self, vector other):
-        for p in other.data:
-            self.data[p.first] = p.second
+    __array__ = values
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cdef fromarrays(self, Py_ssize_t [:] keys, double [:] values):
         cdef Py_ssize_t i
         for i in range(min(keys.size, values.size)):
-            self.data[keys[i]] = values[i]
+            self.data[keys[i]] += values[i]
 
     def update(self, keys, values=1):
-        """Update from vector, keys and scalar value, or keys and values."""
+        """Update from vector, arrays, mapping, or keys with scalar."""
         if isinstance(keys, vector):
-            return self.fromvector(keys)
-        if not isinstance(keys, np.ndarray):
-            keys = np.fromiter(keys, dtype)
-        if not isinstance(values, collections.Iterable):
-            values = np.full(len(keys), values, self.dtype)
-        if not isinstance(values, np.ndarray):
-            values = np.fromiter(values, self.dtype)
-        self.fromarrays(keys, values.astype(float))
+            self += keys
+        elif isinstance(keys, np.ndarray):
+            if not isinstance(values, np.ndarray):
+                values = np.full(len(keys), values, self.dtype)
+            self.fromarrays(keys, values.astype(float))
+        elif isinstance(keys, collections.Mapping):
+            for key in keys:
+                self.data[key] += keys[key]
+        else:
+            for key in keys:
+                self.data[key] += values
+
+    cdef iadd(self, double value):
+        for p in self.data:
+            self.data[p.first] = p.second + value
+        return self
+
+    def __iadd__(self, value):
+        if not isinstance(value, vector):
+            return self.iadd(value)
+        cdef vector other = value
+        for p in other.data:
+            self.data[p.first] += p.second
+        return self
+
+    def __add__(self, value):
+        return type(self)(self).__iadd__(value)
+
+    def __isub__(self, value):
+        if not isinstance(value, vector):
+            return self.iadd(-value)
+        cdef vector other = value
+        for p in other.data:
+            self.data[p.first] -= p.second
+        return self
+
+    def __sub__(self, value):
+        return type(self)(self).__isub__(value)
+
+    cdef imul(self, double value):
+        for p in self.data:
+            self.data[p.first] = p.second * value
+        return self
+
+    def __imul__(self, value):
+        if not isinstance(value, vector):
+            return self.imul(value)
+        cdef vector other = value
+        for p in self.data:
+            if other.data.count(p.first):
+                self.data[p.first] = p.second * other.data[p.first]
+            else:
+                self.data.erase(p.first)
+        return self
+
+    def __mul__(vector self, value):
+        if not isinstance(value, vector):
+            return type(self)(self).__imul__(value)
+        cdef vector other = value
+        if len(other) < len(self):
+            return other * self
+        cdef vector result = type(self)()
+        for p in self.data:
+            if other.data.count(p.first):
+                result.data[p.first] = p.second * other.data[p.first]
+        return result
+
+    def __itruediv__(self, double value):
+        for p in self.data:
+            self.data[p.first] = p.second / value
+        return self
+
+    def __truediv__(self, value):
+        return type(self)(self).__itruediv__(value)
+
+    def __ipow__(self, double value):
+        for p in self.data:
+            self.data[p.first] = p.second ** value
+        return self
+
+    def __pow__(self, value, modulo):
+        if modulo is not None:
+            raise TypeError("pow() with modulo unsupported")
+        return type(self)(self).__ipow__(value)
 
     @classmethod
     def fromdense(cls, values):
