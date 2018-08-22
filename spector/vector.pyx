@@ -204,6 +204,9 @@ cdef class vector:
     def __eq__(self, other):
         return isinstance(other, vector) and len(self) == len(other) and self.issubset(other)
 
+    def __cmp__(self, other):
+        raise TypeError("ordered comparison unsupported")
+
     def items(self):
         """Return zipped keys and values."""
         return zip(self.keys(), self.values())
@@ -226,7 +229,7 @@ cdef class vector:
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    def values(self):
+    def values(self, dtype=None):
         """Return values as numpy array."""
         result = np.empty(len(self), float)
         cdef double [:] arr = result
@@ -234,7 +237,7 @@ cdef class vector:
         for p in self.data:
             arr[i] = p.second
             i += 1
-        return result.astype(self.dtype)
+        return result.astype(dtype or self.dtype)
     __array__ = values
 
     @cython.boundscheck(False)
@@ -258,6 +261,26 @@ cdef class vector:
         else:
             for key in keys:
                 self.data[key] += values
+
+    def __neg__(self):
+        cdef vector result = type(self)()
+        for p in self.data:
+            result.data[p.first] = -p.second
+        return result
+
+    def __abs__(self):
+        cdef vector result = type(self)()
+        for p in self.data:
+            result.data[p.first] = abs(p.second)
+        return result
+
+    def remove(self, double value=0):
+        """Remove all matching values."""
+        cdef int count = 0
+        for p in self.data:
+            if p.second == value:
+                count += self.data.erase(p.first)
+        return count
 
     cdef iadd(self, double value):
         for p in self.data:

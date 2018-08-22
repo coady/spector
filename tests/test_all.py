@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import pytest
 from spector import indices, vector
@@ -11,6 +12,7 @@ def test_defaults():
     assert np.array_equal(vec.keys(), np.array([2, 1, 0]))
     assert np.array_equal(vec.values(), np.array([1, 1, 1]))
     assert np.array_equal(vec.values(), np.array(vec))
+    assert np.array(vec, float).dtype == 'float64'
     assert vec[0] == 1
     vec[0] += 1.5
     assert vec[0] == 2
@@ -161,3 +163,15 @@ def test_math():
     assert vec - vector([2, 3], 1.0) == vector({0: 1.0, 1: 1.0, 2: 0.0, 3: -1.0})
     other = vector([2, 3], 2.0)
     assert vec * other == other * vec == vector({2: 2.0})
+
+
+def test_unary():
+    vec = vector({0: -1, 1: 0, 2: 1})
+    assert -vec == vector({0: 1, 1: 0, 2: -1})
+    assert abs(vec) == vector({0: 1, 1: 0, 2: 1})
+    assert vec.remove() == 1
+    assert vec == vector({0: -1, 2: 1})
+    assert vec.remove(1) == 1
+    assert vec == vector({0: -1})
+    assert vec.remove() == 0
+    assert vec == vector({0: -1})
