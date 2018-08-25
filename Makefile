@@ -1,10 +1,12 @@
 all:
 	cythonize spector/*.pyx
+	python2 setup.py build_ext -i
 	python3 setup.py build_ext -i
 
 check: all
 	python3 setup.py $@ -ms
 	flake8
+	pytest-2.7
 	pytest --cov
 
 html:

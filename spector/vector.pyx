@@ -334,6 +334,17 @@ cdef class vector:
                 result.data[p.first] = p.second * other.data[p.first]
         return result
 
+    def dot(self, vector other):
+        """Return dot product."""
+        if len(other) < len(self):
+            return other.dot(self)
+        cdef double total = 0.0
+        for p in self.data:
+            if other.data.count(p.first):
+                total += p.second * other.data[p.first]
+        return total
+    __matmul__ = dot
+
     def __itruediv__(self, double value):
         for p in self.data:
             self.data[p.first] = p.second / value

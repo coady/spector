@@ -155,6 +155,7 @@ def test_math():
     assert vec - vector([2, 3], 1.0) == vector({0: 1.0, 1: 1.0, 2: 0.0, 3: -1.0})
     other = vector([2, 3], 2.0)
     assert vec * other == other * vec == vector({2: 2.0})
+    assert vec.__matmul__(other) == other.dot(vec) == 2.0
 
 
 def test_unary():

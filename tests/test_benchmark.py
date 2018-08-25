@@ -26,7 +26,7 @@ def sized(func, *args):
 timed = partial(diff, time.time)
 executor = futures.ProcessPoolExecutor()
 keys = np.array(range(2 ** 19))
-values = np.ones(len(keys))
+values = np.ones(len(keys), float)
 
 
 def test_set():
@@ -39,8 +39,11 @@ def test_set():
 
 def test_vector():
     print('vector')
-    print('memory', sized(vector, keys, values) / sized(set, zip(keys, values)))
-    print('new', timed(vector, keys, values) / timed(set, zip(keys, values)))
+    print('memory', sized(vector, keys, values) / sized(dict, zip(keys, values)))
+    print('new', timed(vector, keys, values) / timed(dict, zip(keys, values)))
     c, py = vector(keys, values), dict(zip(keys, values))
     print('keys', timed(c.keys) / timed(np.fromiter, py.keys(), keys.dtype, len(py)))
     print('values', timed(c.values) / timed(np.fromiter, py.values(), values.dtype, len(py)))
+    print('scalar')
+    print('sum', timed(np.sum, c) / timed(sum, py.values()))
+    print('dot', timed(c.dot, c) / timed(sum, (v + v for v in py.values())))
