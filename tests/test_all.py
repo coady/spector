@@ -1,12 +1,12 @@
 from __future__ import division
 import numpy as np
 import pytest
-from spector import indices, vector
+from spector import indices, matrix, vector
 
 
 def test_vector():
+    assert str(vector()) == 'vector([], [])'
     vec = vector(range(3))
-    assert str(vec) == 'vector([2 1 0], [1. 1. 1.])'
     assert len(vec) == 3
     assert np.array_equal(vec.keys(), np.array([2, 1, 0]))
     assert np.array_equal(vec.values(), np.array([1, 1, 1]))
@@ -168,3 +168,11 @@ def test_unary():
     assert vec == vector({0: -1})
     assert vec.remove() == 0
     assert vec == vector({0: -1})
+
+
+def test_matrix():
+    mat = matrix()
+    mat[0][1] = 2.0
+    assert np.array_equal(mat.row, np.array([0]))
+    assert np.array_equal(mat.col, np.array([1]))
+    assert np.array_equal(mat.data, np.array([2.0]))

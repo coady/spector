@@ -3,7 +3,7 @@ import time
 from concurrent import futures
 from functools import partial
 import numpy as np
-from spector import indices, vector
+from spector import indices, matrix, vector
 
 
 def memory(unit=1e6):
@@ -26,7 +26,7 @@ def sized(func, *args):
 timed = partial(diff, time.time)
 executor = futures.ProcessPoolExecutor()
 keys = np.array(range(2 ** 19))
-values = np.ones(len(keys), float)
+values = np.ones(len(keys))
 
 
 def test_set():
@@ -47,3 +47,18 @@ def test_vector():
     print('scalar')
     print('sum', timed(np.sum, c) / timed(sum, py.values()))
     print('dot', timed(c.dot, c) / timed(sum, (v + v for v in py.values())))
+
+
+def dok(size):
+    return {(i, j): 1.0 for i in range(size) for j in range(size)}
+
+
+def vecs(size):
+    arr = np.array(range(size))
+    return matrix((i, vector(arr)) for i in range(size))
+
+
+def test_matrix():
+    print('matrix')
+    size = int(len(keys) ** 0.5)
+    print('memory', sized(vecs, size) / sized(dok, size))
