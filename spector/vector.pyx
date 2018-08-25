@@ -164,13 +164,10 @@ cdef class vector:
 
     :param keys: optional iterable of keys
     :param values: optional scalar or iterable of values
-    :param dtype: optional dtype inferred from values
     """
-    cdef public object dtype
     cdef unordered_map[Py_ssize_t, double] data
 
-    def __init__(self, keys=(), values=1, dtype=None):
-        self.dtype = np.dtype(dtype or getattr(values, 'dtype', type(values)))
+    def __init__(self, keys=(), values=1.0):
         self.update(keys, values)
 
     def __repr__(self):
@@ -180,7 +177,7 @@ cdef class vector:
         return self.data.size()
 
     def __getitem__(self, Py_ssize_t key):
-        return self.dtype.type(self.data[key])
+        return self.data[key]
 
     def __setitem__(self, Py_ssize_t key, value):
         self.data[key] = value
@@ -229,7 +226,7 @@ cdef class vector:
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    def values(self, dtype=None):
+    def values(self, dtype=float):
         """Return values as numpy array."""
         result = np.empty(len(self), float)
         cdef double [:] arr = result
@@ -237,7 +234,7 @@ cdef class vector:
         for p in self.data:
             arr[i] = p.second
             i += 1
-        return result.astype(dtype or self.dtype)
+        return result if dtype is float else result.astype(dtype)
     __array__ = values
 
     @cython.boundscheck(False)
@@ -247,13 +244,13 @@ cdef class vector:
         for i in range(min(keys.size, values.size)):
             self.data[keys[i]] += values[i]
 
-    def update(self, keys, values=1):
+    def update(self, keys, values=1.0):
         """Update from vector, arrays, mapping, or keys with scalar."""
         if isinstance(keys, vector):
             self += keys
         elif isinstance(keys, np.ndarray):
             if not isinstance(values, np.ndarray):
-                values = np.full(len(keys), values, self.dtype)
+                values = np.full(len(keys), values)
             self.fromarrays(keys, values.astype(float))
         elif isinstance(keys, collections.Mapping):
             for key in keys:
@@ -361,9 +358,9 @@ cdef class vector:
         keys, = np.nonzero(values)
         return cls(keys, values[keys])
 
-    def todense(self, size=None):
+    def todense(self, size=None, dtype=float):
         """Return a dense array representation of vector."""
         keys = self.keys()
-        result = np.zeros(keys.max() + 1 if size is None else size, self.dtype)
+        result = np.zeros(keys.max() + 1 if size is None else size, dtype)
         result[keys] = self.values()
         return result
