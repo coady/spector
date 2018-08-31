@@ -11,7 +11,7 @@ check: all
 
 html:
 	cythonize -aX linetrace=True spector/*.pyx
-	python3 setup.py build_ext -i --define CYTHON_TRACE
+	python3 setup.py build_ext -i --define CYTHON_TRACE --define CYTHON_TRACE_NOGIL
 	pytest --cov --cov-report $@
 
 dist: all

@@ -1,6 +1,8 @@
 # distutils: language=c++
 import collections
 import numpy as np
+from cython.operator cimport dereference as deref
+from libcpp cimport bool
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
 cimport cython
@@ -37,7 +39,7 @@ cdef class indices:
         for k in self.data:
             yield k
 
-    cdef issubset(self, indices other):
+    cdef bool issubset(self, indices other) nogil:
         for k in self.data:
             if not other.data.count(k):
                 return False
@@ -52,12 +54,15 @@ cdef class indices:
     def __lt__(self, indices other):
         return len(self) < len(other) and self.issubset(other)
 
-    def isdisjoint(self, indices other):
-        """Return whether two indices have a null intersetction."""
+    cdef bool intersects(self, indices other) nogil:
         for k in self.data:
             if other.data.count(k):
-                return False
-        return True
+                return True
+        return False
+
+    def isdisjoint(self, indices other):
+        """Return whether two indices have a null intersection."""
+        return not (other.intersects(self) if len(other) < len(self) else self.intersects(other))
 
     def add(self, Py_ssize_t key):
         """Add an index key."""
@@ -69,7 +74,8 @@ cdef class indices:
 
     def clear(self):
         """Remove all indices."""
-        self.data.clear()
+        with nogil:
+            self.data.clear()
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -78,17 +84,19 @@ cdef class indices:
         result = np.empty(len(self), dtype)
         cdef Py_ssize_t [:] arr = result
         cdef Py_ssize_t i = 0
-        for k in self.data:
-            arr[i] = k
-            i += 1
+        with nogil:
+            for k in self.data:
+                arr[i] = k
+                i += 1
         return result
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cdef fromarray(self, Py_ssize_t [:] keys):
-        cdef Py_ssize_t i
-        for i in range(keys.size):
-            self.data.insert(keys[i])
+        cdef Py_ssize_t i, n = keys.size
+        with nogil:
+            for i in range(n):
+                self.data.insert(keys[i])
 
     def update(self, keys):
         """Update from indices, array, or iterable."""
@@ -101,47 +109,53 @@ cdef class indices:
                 self.data.insert(key)
 
     def __ior__(self, indices other):
-        for k in other.data:
-            self.data.insert(k)
+        with nogil:
+            for k in other.data:
+                self.data.insert(k)
         return self
 
     def __or__(self, indices other):
         return type(self)(self).__ior__(other)
 
     def __ixor__(self, indices other):
-        for k in other.data:
-            if not self.data.insert(k).second:
-                self.data.erase(k)
+        with nogil:
+            for k in other.data:
+                if not self.data.insert(k).second:
+                    self.data.erase(k)
         return self
 
     def __xor__(self, indices other):
         return type(self)(self).__ixor__(other)
 
     def __iand__(self, indices other):
-        for k in self.data:
-            if not other.data.count(k):
-                self.data.erase(k)
+        with nogil:
+            for k in self.data:
+                if not other.data.count(k):
+                    self.data.erase(k)
         return self
 
     def __and__(indices self, indices other):
         if len(other) < len(self):
             return other & self
         cdef indices result = type(self)()
-        for k in self.data:
-            if other.data.count(k):
-                result.data.insert(k)
+        with nogil:
+            for k in self.data:
+                if other.data.count(k):
+                    result.data.insert(k)
         return result
 
     def __isub__(self, indices other):
-        for k in other.data:
-            self.data.erase(k)
+        with nogil:
+            for k in other.data:
+                self.data.erase(k)
         return self
 
     def __sub__(indices self, indices other):
         cdef indices result = type(self)()
-        for k in self.data:
-            if not other.data.count(k):
-                result.data.insert(k)
+        with nogil:
+            for k in self.data:
+                if not other.data.count(k):
+                    result.data.insert(k)
         return result
 
     @classmethod
@@ -152,7 +166,7 @@ cdef class indices:
     def todense(self, size=None):
         """Return a dense array representation of indices."""
         keys = np.array(self)
-        result = np.zeros(keys.max() + 1 if size is None else size, bool)
+        result = np.zeros(keys.max() + 1 if size is None else size, np.bool)
         result[keys] = True
         return result
 
@@ -192,7 +206,7 @@ cdef class vector:
         for p in self.data:
             yield p.first
 
-    cdef issubset(self, vector other):
+    cdef bool issubset(self, vector other) nogil:
         for p in self.data:
             if p.second != other.data[p.first]:
                 return False
@@ -210,7 +224,8 @@ cdef class vector:
 
     def clear(self):
         """Remove all items."""
-        self.data.clear()
+        with nogil:
+            self.data.clear()
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -219,9 +234,10 @@ cdef class vector:
         result = np.empty(len(self), dtype)
         cdef Py_ssize_t [:] arr = result
         cdef Py_ssize_t i = 0
-        for p in self.data:
-            arr[i] = p.first
-            i += 1
+        with nogil:
+            for p in self.data:
+                arr[i] = p.first
+                i += 1
         return result
 
     @cython.boundscheck(False)
@@ -231,18 +247,20 @@ cdef class vector:
         result = np.empty(len(self), float)
         cdef double [:] arr = result
         cdef Py_ssize_t i = 0
-        for p in self.data:
-            arr[i] = p.second
-            i += 1
+        with nogil:
+            for p in self.data:
+                arr[i] = p.second
+                i += 1
         return result if dtype is float else result.astype(dtype)
     __array__ = values
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cdef fromarrays(self, Py_ssize_t [:] keys, double [:] values):
-        cdef Py_ssize_t i
-        for i in range(min(keys.size, values.size)):
-            self.data[keys[i]] += values[i]
+        cdef Py_ssize_t i, n = min(keys.size, values.size)
+        with nogil:
+            for i in range(n):
+                self.data[keys[i]] += values[i]
 
     def update(self, keys, values=1.0):
         """Update from vector, arrays, mapping, or keys with scalar."""
@@ -261,8 +279,9 @@ cdef class vector:
 
     def __neg__(self):
         cdef vector result = type(self)()
-        for p in self.data:
-            result.data[p.first] = -p.second
+        with nogil:
+            for p in self.data:
+                result.data[p.first] = -p.second
         return result
 
     def __abs__(self):
@@ -274,22 +293,25 @@ cdef class vector:
     def remove(self, double value=0):
         """Remove all matching values."""
         cdef int count = 0
-        for p in self.data:
-            if p.second == value:
-                count += self.data.erase(p.first)
+        with nogil:
+            for p in self.data:
+                if p.second == value:
+                    count += self.data.erase(p.first)
         return count
 
     cdef iadd(self, double value):
-        for p in self.data:
-            self.data[p.first] = p.second + value
+        with nogil:
+            for p in self.data:
+                self.data[p.first] = p.second + value
         return self
 
     def __iadd__(self, value):
         if not isinstance(value, vector):
             return self.iadd(value)
         cdef vector other = value
-        for p in other.data:
-            self.data[p.first] += p.second
+        with nogil:
+            for p in other.data:
+                self.data[p.first] += p.second
         return self
 
     def __add__(self, value):
@@ -299,27 +321,31 @@ cdef class vector:
         if not isinstance(value, vector):
             return self.iadd(-value)
         cdef vector other = value
-        for p in other.data:
-            self.data[p.first] -= p.second
+        with nogil:
+            for p in other.data:
+                self.data[p.first] -= p.second
         return self
 
     def __sub__(self, value):
         return type(self)(self).__isub__(value)
 
     cdef imul(self, double value):
-        for p in self.data:
-            self.data[p.first] = p.second * value
+        with nogil:
+            for p in self.data:
+                self.data[p.first] = p.second * value
         return self
 
     def __imul__(self, value):
         if not isinstance(value, vector):
             return self.imul(value)
         cdef vector other = value
-        for p in self.data:
-            if other.data.count(p.first):
-                self.data[p.first] = p.second * other.data[p.first]
-            else:
-                self.data.erase(p.first)
+        with nogil:
+            for p in self.data:
+                it = other.data.find(p.first)
+                if it != other.data.end():
+                    self.data[p.first] = p.second * deref(it).second
+                else:
+                    self.data.erase(p.first)
         return self
 
     def __mul__(vector self, value):
@@ -329,9 +355,11 @@ cdef class vector:
         if len(other) < len(self):
             return other * self
         cdef vector result = type(self)()
-        for p in self.data:
-            if other.data.count(p.first):
-                result.data[p.first] = p.second * other.data[p.first]
+        with nogil:
+            for p in self.data:
+                it = other.data.find(p.first)
+                if it != other.data.end():
+                    result.data[p.first] = p.second * deref(it).second
         return result
 
     def dot(self, vector other):
@@ -339,23 +367,26 @@ cdef class vector:
         if len(other) < len(self):
             return other.dot(self)
         cdef double total = 0.0
-        for p in self.data:
-            if other.data.count(p.first):
-                total += p.second * other.data[p.first]
+        with nogil:
+            for p in self.data:
+                it = other.data.find(p.first)
+                total += p.second * (deref(it).second if it != other.data.end() else 0.0)
         return total
     __matmul__ = dot
 
     def __itruediv__(self, double value):
-        for p in self.data:
-            self.data[p.first] = p.second / value
+        with nogil:
+            for p in self.data:
+                self.data[p.first] = p.second / value
         return self
 
     def __truediv__(self, value):
         return type(self)(self).__itruediv__(value)
 
     def __ipow__(self, double value):
-        for p in self.data:
-            self.data[p.first] = p.second ** value
+        with nogil:
+            for p in self.data:
+                self.data[p.first] = p.second ** value
         return self
 
     def __pow__(self, value, modulo):
