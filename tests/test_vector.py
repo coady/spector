@@ -19,11 +19,11 @@ def test_basic():
     del vec[0]
     assert 0 not in vec
     assert vec[0] == 0.0
-    assert 0 in vec
+    assert 0 not in vec
     with pytest.raises(TypeError):
         vec[None]
-    assert set(vec) == {0, 1, 2}
-    assert dict(vec.items()) == {0: 0.0, 1: 1.0, 2: 1.0}
+    assert set(vec) == {1, 2}
+    assert dict(vec.items()) == {1: 1.0, 2: 1.0}
     vec.clear()
     assert not vec
     vec = vector(vector(range(3), 2.0))

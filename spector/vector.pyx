@@ -191,7 +191,7 @@ cdef class vector:
         return self.data.size()
 
     def __getitem__(self, Py_ssize_t key):
-        return self.data[key]
+        return self.get(key)
 
     def __setitem__(self, Py_ssize_t key, value):
         self.data[key] = value
@@ -205,6 +205,10 @@ cdef class vector:
     def __iter__(self):
         for p in self.data:
             yield p.first
+
+    cdef double get(self, Py_ssize_t key) nogil:
+        it = self.data.find(key)
+        return deref(it).second if it != self.data.end() else 0.0
 
     cdef bool issubset(self, vector other) nogil:
         for p in self.data:
@@ -369,8 +373,7 @@ cdef class vector:
         cdef double total = 0.0
         with nogil:
             for p in self.data:
-                it = other.data.find(p.first)
-                total += p.second * (deref(it).second if it != other.data.end() else 0.0)
+                total += p.second * other.get(p.first)
         return total
     __matmul__ = dot
 
