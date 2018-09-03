@@ -209,18 +209,6 @@ cdef class vector:
         it = self.data.find(key)
         return deref(it).second if it != self.data.end() else 0.0
 
-    cdef bool issubset(self, vector other) nogil:
-        for p in self.data:
-            if p.second != other.data[p.first]:
-                return False
-        return True
-
-    def __eq__(self, other):
-        return isinstance(other, vector) and len(self) == len(other) and self.issubset(other)
-
-    def __cmp__(self, other):
-        raise TypeError("ordered comparison unsupported")
-
     @cython.wraparound(False)
     cdef apply(self, vector other):
         result = np.empty(len(self), float)
@@ -240,6 +228,28 @@ cdef class vector:
     def filter(self, ufunc, *args, **kwargs):
         """Return element-wise array of keys from applying predicate across vectors."""
         return self.keys()[self.map(ufunc, *args, **kwargs)]
+
+    def equal(self, vector other):
+        """Return whether vectors are equal as scalar bool; == is element-wise."""
+        return self.data == other.data
+
+    def __eq__(self, value):
+        return self.filter(np.equal, value)
+
+    def __ne__(self, value):
+        return self.filter(np.not_equal, value)
+
+    def __lt__(self, value):
+        return self.filter(np.less, value)
+
+    def __le__(self, value):
+        return self.filter(np.less_equal, value)
+
+    def __gt__(self, value):
+        return self.filter(np.greater, value)
+
+    def __ge__(self, value):
+        return self.filter(np.greater_equal, value)
 
     def items(self):
         """Return zipped keys and values."""

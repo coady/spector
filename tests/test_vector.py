@@ -36,12 +36,12 @@ def test_basic():
 
 def test_cmp():
     vec = vector(range(3))
-    assert vec == vec == vector(range(3))
-    assert vec != vector(range(3), 2)
-    assert vec != vector(range(2))
-    assert vec != vector(range(4))
-    with pytest.raises(TypeError):
-        vec <= vec
+    assert set(vec == vector(range(3))) == {0, 1, 2}
+    assert np.array_equal(vec != vector(range(3)), np.empty(0))
+    assert set(vec <= vector(range(2))) == {0, 1}
+    assert set(vec >= vector(range(4))) == {0, 1, 2}
+    assert np.array_equal(vec < vector({0: 1.0, 1: 2.0}), np.array([1]))
+    assert np.array_equal(vec > vector({0: 1.0, 1: 2.0}), np.array([2]))
 
 
 def test_dense():
@@ -57,49 +57,50 @@ def test_dense():
 def test_math():
     vec = vector(range(3), 1.0)
     vec += 1
-    assert vec == vector(range(3), 2.0)
+    assert vec.equal(vector(range(3), 2.0))
     vec -= 1
-    assert vec == vector(range(3), 1.0)
+    assert vec.equal(vector(range(3), 1.0))
     vec *= 2
-    assert vec == vector(range(3), 2.0)
+    assert vec.equal(vector(range(3), 2.0))
     vec **= 3
-    assert vec == vector(range(3), 8.0)
+    assert vec.equal(vector(range(3), 8.0))
     vec /= 2
-    assert vec == vector(range(3), 4.0)
+    assert vec.equal(vector(range(3), 4.0))
 
     vec += vector([3], 4.0)
-    assert vec == vector(range(4), 4.0)
+    assert vec.equal(vector(range(4), 4.0))
     vec *= vector([3, 4], 2.0)
-    assert vec == vector([3], 8.0)
+    assert vec.equal(vector([3], 8.0))
     vec -= vec
-    assert vec == vector([3], 0.0)
+    assert vec.equal(vector([3], 0.0))
 
     vec = vector(range(3), 1.0)
-    assert vec + 1 == vector(range(3), 2.0)
-    assert vec - 1 == vector(range(3), 0.0)
-    assert vec * 2 == vector(range(3), 2.0)
-    assert (vec + 1) ** 3 == vector(range(3), 8.0)
-    assert (vec + 1) / 2 == vector(range(3), 1.0)
+    assert (vec + 1).equal(vector(range(3), 2.0))
+    assert (vec - 1).equal(vector(range(3), 0.0))
+    assert (vec * 2).equal(vector(range(3), 2.0))
+    assert ((vec + 1) ** 3).equal(vector(range(3), 8.0))
+    assert ((vec + 1) / 2).equal(vector(range(3), 1.0))
     with pytest.raises(TypeError):
         pow(vec, 2, 2)
 
-    assert vec + vector([2, 3], 2.0) == vector({0: 1.0, 1: 1.0, 2: 3.0, 3: 2.0})
-    assert vec - vector([2, 3], 1.0) == vector({0: 1.0, 1: 1.0, 2: 0.0, 3: -1.0})
+    assert (vec + vector([2, 3], 2.0)).equal(vector({0: 1.0, 1: 1.0, 2: 3.0, 3: 2.0}))
+    assert (vec - vector([2, 3], 1.0)).equal(vector({0: 1.0, 1: 1.0, 2: 0.0, 3: -1.0}))
     other = vector([2, 3], 2.0)
-    assert vec * other == other * vec == vector({2: 2.0})
+    assert (vec * other).equal(vector({2: 2.0}))
+    assert (other * vec).equal(vector({2: 2.0}))
     assert vec.__matmul__(other) == other.dot(vec) == 2.0
 
 
 def test_unary():
     vec = vector({0: -1, 1: 0, 2: 1})
-    assert -vec == vector({0: 1, 1: 0, 2: -1})
-    assert abs(vec) == vector({0: 1, 1: 0, 2: 1})
+    assert (-vec).equal(vector({0: 1, 1: 0, 2: -1}))
+    assert abs(vec).equal(vector({0: 1, 1: 0, 2: 1}))
     assert vec.remove() == 1
-    assert vec == vector({0: -1, 2: 1})
+    assert vec.equal(vector({0: -1, 2: 1}))
     assert vec.remove(1) == 1
-    assert vec == vector({0: -1})
+    assert vec.equal(vector({0: -1}))
     assert vec.remove() == 0
-    assert vec == vector({0: -1})
+    assert vec.equal(vector({0: -1}))
 
 
 def test_ufunc():
