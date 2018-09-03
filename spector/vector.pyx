@@ -77,7 +77,6 @@ cdef class indices:
         with nogil:
             self.data.clear()
 
-    @cython.boundscheck(False)
     @cython.wraparound(False)
     def __array__(self):
         """Return keys as numpy array."""
@@ -88,7 +87,7 @@ cdef class indices:
             for k in self.data:
                 arr[i] = k
                 i += 1
-        return result
+        return result[:i]
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -222,6 +221,26 @@ cdef class vector:
     def __cmp__(self, other):
         raise TypeError("ordered comparison unsupported")
 
+    @cython.wraparound(False)
+    cdef apply(self, vector other):
+        result = np.empty(len(self), float)
+        cdef double [:] arr = result
+        cdef Py_ssize_t i = 0
+        with nogil:
+            for p in self.data:
+                arr[i] = other.get(p.first)
+                i += 1
+        return result[:i]
+
+    def map(self, ufunc, *args, **kwargs):
+        """Return element-wise array of values from applying function across vectors."""
+        args = [self.apply(arg) if isinstance(arg, vector) else arg for arg in args]
+        return ufunc(self, *args, **kwargs)
+
+    def filter(self, ufunc, *args, **kwargs):
+        """Return element-wise array of keys from applying predicate across vectors."""
+        return self.keys()[self.map(ufunc, *args, **kwargs)]
+
     def items(self):
         """Return zipped keys and values."""
         return zip(self.keys(), self.values())
@@ -231,7 +250,6 @@ cdef class vector:
         with nogil:
             self.data.clear()
 
-    @cython.boundscheck(False)
     @cython.wraparound(False)
     def keys(self):
         """Return keys as numpy array."""
@@ -242,9 +260,8 @@ cdef class vector:
             for p in self.data:
                 arr[i] = p.first
                 i += 1
-        return result
+        return result[:i]
 
-    @cython.boundscheck(False)
     @cython.wraparound(False)
     def values(self, dtype=float):
         """Return values as numpy array."""
@@ -255,7 +272,7 @@ cdef class vector:
             for p in self.data:
                 arr[i] = p.second
                 i += 1
-        return result if dtype is float else result.astype(dtype)
+        return (result if dtype is float else result.astype(dtype))[:i]
     __array__ = values
 
     @cython.boundscheck(False)
@@ -282,17 +299,10 @@ cdef class vector:
                 self.data[key] += values
 
     def __neg__(self):
-        cdef vector result = type(self)()
-        with nogil:
-            for p in self.data:
-                result.data[p.first] = -p.second
-        return result
+        return type(self)(self.keys(), np.negative(self))
 
     def __abs__(self):
-        cdef vector result = type(self)()
-        for p in self.data:
-            result.data[p.first] = abs(p.second)
-        return result
+        return type(self)(self.keys(), np.absolute(self))
 
     def remove(self, double value=0):
         """Remove all matching values."""

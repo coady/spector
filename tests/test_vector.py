@@ -100,3 +100,11 @@ def test_unary():
     assert vec == vector({0: -1})
     assert vec.remove() == 0
     assert vec == vector({0: -1})
+
+
+def test_ufunc():
+    vec = vector({0: -1.0, 1: 0.0, 2: 1.0})
+    assert set(vec.map(np.minimum, 0)) == {-1.0, 0.0}
+    assert set(vec.map(np.maximum, -vec)) == {0.0, 1.0}
+    assert set(vec.filter(np.equal, 0.0)) == {1}
+    assert set(vec.filter(np.equal, abs(vec))) == {1, 2}
