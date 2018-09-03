@@ -314,6 +314,14 @@ cdef class vector:
     def __abs__(self):
         return type(self)(self.keys(), np.absolute(self))
 
+    def minimum(self, value):
+        """Return element-wise minimum vector."""
+        return type(self)(self.keys(), self.map(np.minimum, value))
+
+    def maximum(self, value):
+        """Return element-wise maximum vector."""
+        return type(self)(self.keys(), self.map(np.maximum, value))
+
     def remove(self, double value=0):
         """Remove all matching values."""
         cdef int count = 0
@@ -342,13 +350,7 @@ cdef class vector:
         return type(self)(self).__iadd__(value)
 
     def __isub__(self, value):
-        if not isinstance(value, vector):
-            return self.iadd(-value)
-        cdef vector other = value
-        with nogil:
-            for p in other.data:
-                self.data[p.first] -= p.second
-        return self
+        return self.iadd(-value)
 
     def __sub__(self, value):
         return type(self)(self).__isub__(value)
@@ -384,6 +386,36 @@ cdef class vector:
                 it = other.data.find(p.first)
                 if it != other.data.end():
                     result.data[p.first] = p.second * deref(it).second
+        return result
+
+    def __ior__(self, vector other):
+        with nogil:
+            for p in other.data:
+                self.data[p.first] = max(self.data[p.first], p.second)
+        return self
+
+    def __or__(self, other):
+        return type(self)(self).__ior__(other)
+
+    def __iand__(self, vector other):
+        with nogil:
+            for p in self.data:
+                it = other.data.find(p.first)
+                if it != other.data.end():
+                    self.data[p.first] = min(p.second, deref(it).second)
+                else:
+                    self.data.erase(p.first)
+        return self
+
+    def __and__(vector self, vector other):
+        if len(other) < len(self):
+            return other & self
+        cdef vector result = type(self)()
+        with nogil:
+            for p in self.data:
+                it = other.data.find(p.first)
+                if it != other.data.end():
+                    result.data[p.first] = min(p.second, deref(it).second)
         return result
 
     def dot(self, vector other):

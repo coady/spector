@@ -71,8 +71,8 @@ def test_math():
     assert vec.equal(vector(range(4), 4.0))
     vec *= vector([3, 4], 2.0)
     assert vec.equal(vector([3], 8.0))
-    vec -= vec
-    assert vec.equal(vector([3], 0.0))
+    with pytest.raises(TypeError):
+        vec -= vec
 
     vec = vector(range(3), 1.0)
     assert (vec + 1).equal(vector(range(3), 2.0))
@@ -84,7 +84,6 @@ def test_math():
         pow(vec, 2, 2)
 
     assert (vec + vector([2, 3], 2.0)).equal(vector({0: 1.0, 1: 1.0, 2: 3.0, 3: 2.0}))
-    assert (vec - vector([2, 3], 1.0)).equal(vector({0: 1.0, 1: 1.0, 2: 0.0, 3: -1.0}))
     other = vector([2, 3], 2.0)
     assert (vec * other).equal(vector({2: 2.0}))
     assert (other * vec).equal(vector({2: 2.0}))
@@ -109,3 +108,17 @@ def test_ufunc():
     assert set(vec.map(np.maximum, -vec)) == {0.0, 1.0}
     assert set(vec.filter(np.equal, 0.0)) == {1}
     assert set(vec.filter(np.equal, abs(vec))) == {1, 2}
+
+
+def test_sets():
+    vec = vector(range(3))
+    other = vector({1: 0.0, 2: 2.0, 3: 1.0})
+    assert (vec | other).equal(vector({0: 1.0, 1: 1.0, 2: 2.0, 3: 1.0}))
+    assert (vec & other).equal(vector({1: 0.0, 2: 1.0}))
+    assert vec.maximum(other).equal(vector({0: 1.0, 1: 1.0, 2: 2.0}))
+    assert vec.minimum(other).equal(vector({0: 0.0, 1: 0.0, 2: 1.0}))
+
+    vec |= other
+    assert vec.equal(vector({0: 1.0, 1: 1.0, 2: 2.0, 3: 1.0}))
+    vec &= vector({2: 1.0, 3: 2.0, 4: 1.0})
+    assert vec.equal(vector({2: 1.0, 3: 1.0}))
