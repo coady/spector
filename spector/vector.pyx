@@ -189,14 +189,25 @@ cdef class vector:
     def __len__(self):
         return self.data.size()
 
-    def __getitem__(self, Py_ssize_t key):
+    def __getitem__(self, key):
+        if isinstance(key, collections.Iterable):
+            return type(self)(key).__imul__(self)  # keys are typically a subset
         return self.get(key)
 
-    def __setitem__(self, Py_ssize_t key, value):
-        self.data[key] = value
+    def __setitem__(self, key, value):
+        if isinstance(key, collections.Iterable):
+            other = vector(key, value)
+            with nogil:
+                for p in other.data:
+                    self.data[p.first] = p.second
+        else:
+            self.data[key] = value
 
-    def __delitem__(self, Py_ssize_t key):
-        self.data.erase(key)
+    def __delitem__(self, key):
+        keys = indices(key if isinstance(key, collections.Iterable) else [key])
+        with nogil:
+            for k in keys.data:
+                self.data.erase(k)
 
     def __contains__(self, Py_ssize_t key):
         return self.data.count(key)
@@ -321,15 +332,6 @@ cdef class vector:
     def maximum(self, value):
         """Return element-wise maximum vector."""
         return type(self)(self.keys(), self.map(np.maximum, value))
-
-    def remove(self, double value=0):
-        """Remove all matching values."""
-        cdef int count = 0
-        with nogil:
-            for p in self.data:
-                if p.second == value:
-                    count += self.data.erase(p.first)
-        return count
 
     cdef iadd(self, double value):
         with nogil:

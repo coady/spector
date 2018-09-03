@@ -43,6 +43,26 @@ def test_cmp():
     assert np.array_equal(vec < vector({0: 1.0, 1: 2.0}), np.array([1]))
     assert np.array_equal(vec > vector({0: 1.0, 1: 2.0}), np.array([2]))
 
+    vec = vector({0: 0.0, 1: 1.0, 2: 2.0})
+    assert np.array_equal(vec == 1.0, np.array([1]))
+    assert set(vec != 1.0) == {0, 2}
+    assert set(vec <= 1.0) == {0, 1}
+    assert np.array_equal(vec < 1.0, np.array([0]))
+    assert set(vec >= 1.0) == {1, 2}
+    assert np.array_equal(vec > 1.0, np.array([2]))
+
+    assert vec[vec <= 1.0].equal(vector({0: 0.0, 1: 1.0}))
+    assert vec[vec >= 1.0].equal(vector({1: 1.0, 2: 2.0}))
+    assert len(vec[(2, 3)]) == 1
+    vec[vec <= 1.0] = 1.0
+    assert vec[0] == 1.0
+    vec[(2, 3)] = 3.0
+    assert vec[2] == vec[3] == 3.0
+    del vec[vec > 1.0]
+    assert len(vec) == 2
+    del vec[(1, 2)]
+    assert len(vec) == 1
+
 
 def test_dense():
     arr = np.array(range(4))
@@ -90,20 +110,10 @@ def test_math():
     assert vec.__matmul__(other) == other.dot(vec) == 2.0
 
 
-def test_unary():
-    vec = vector({0: -1, 1: 0, 2: 1})
-    assert (-vec).equal(vector({0: 1, 1: 0, 2: -1}))
-    assert abs(vec).equal(vector({0: 1, 1: 0, 2: 1}))
-    assert vec.remove() == 1
-    assert vec.equal(vector({0: -1, 2: 1}))
-    assert vec.remove(1) == 1
-    assert vec.equal(vector({0: -1}))
-    assert vec.remove() == 0
-    assert vec.equal(vector({0: -1}))
-
-
 def test_ufunc():
     vec = vector({0: -1.0, 1: 0.0, 2: 1.0})
+    assert (-vec).equal(vector({0: 1, 1: 0, 2: -1}))
+    assert abs(vec).equal(vector({0: 1, 1: 0, 2: 1}))
     assert set(vec.map(np.minimum, 0)) == {-1.0, 0.0}
     assert set(vec.map(np.maximum, -vec)) == {0.0, 1.0}
     assert set(vec.filter(np.equal, 0.0)) == {1}
