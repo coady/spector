@@ -125,10 +125,15 @@ def test_sets():
     other = vector({1: 0.0, 2: 2.0, 3: 1.0})
     assert (vec | other).equal(vector({0: 1.0, 1: 1.0, 2: 2.0, 3: 1.0}))
     assert (vec & other).equal(vector({1: 0.0, 2: 1.0}))
+    assert not vec & vector()
     assert vec.maximum(other).equal(vector({0: 1.0, 1: 1.0, 2: 2.0}))
     assert vec.minimum(other).equal(vector({0: 0.0, 1: 0.0, 2: 1.0}))
+    assert (vec ^ other).equal(vector({0: 1.0, 3: 1.0}))
+    assert vec.difference(other).equal(vector({0: 1.0}))
 
     vec |= other
     assert vec.equal(vector({0: 1.0, 1: 1.0, 2: 2.0, 3: 1.0}))
     vec &= vector({2: 1.0, 3: 2.0, 4: 1.0})
     assert vec.equal(vector({2: 1.0, 3: 1.0}))
+    vec ^= other
+    assert vec.equal(vector({1: 0.0}))

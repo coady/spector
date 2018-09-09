@@ -11,8 +11,6 @@ try:
 except ImportError:
     pass
 
-dtype = 'i{}'.format(sizeof(Py_ssize_t))
-
 
 cdef class indices:
     """A sparse boolean array, i.e., set of indices.
@@ -80,7 +78,7 @@ cdef class indices:
     @cython.wraparound(False)
     def __array__(self):
         """Return keys as numpy array."""
-        result = np.empty(len(self), dtype)
+        result = np.empty(len(self), np.intp)
         cdef Py_ssize_t [:] arr = result
         cdef Py_ssize_t i = 0
         with nogil:
@@ -274,7 +272,7 @@ cdef class vector:
     @cython.wraparound(False)
     def keys(self):
         """Return keys as numpy array."""
-        result = np.empty(len(self), dtype)
+        result = np.empty(len(self), np.intp)
         cdef Py_ssize_t [:] arr = result
         cdef Py_ssize_t i = 0
         with nogil:
@@ -396,7 +394,7 @@ cdef class vector:
                 self.data[p.first] = max(self.data[p.first], p.second)
         return self
 
-    def __or__(self, other):
+    def __or__(self, vector other):
         return type(self)(self).__ior__(other)
 
     def __iand__(self, vector other):
@@ -418,6 +416,26 @@ cdef class vector:
                 it = other.data.find(p.first)
                 if it != other.data.end():
                     result.data[p.first] = min(p.second, deref(it).second)
+        return result
+
+    def __ixor__(self, vector other):
+        with nogil:
+            for p in other.data:
+                if not self.data.erase(p.first):
+                    self.data[p.first] = p.second
+        return self
+
+    def __xor__(self, vector other):
+        return type(self)(self).__ixor__(other)
+
+    def difference(self, keys):
+        """Provisional set difference; return vector without keys."""
+        ind = indices(keys)
+        cdef vector result = type(self)()
+        with nogil:
+            for p in self.data:
+                if not ind.data.count(p.first):
+                    result.data[p.first] = p.second
         return result
 
     def dot(self, vector other):
