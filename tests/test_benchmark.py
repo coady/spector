@@ -46,7 +46,7 @@ def test_vector():
     print('values', timed(c.values) / timed(np.fromiter, py.values(), values.dtype, len(py)))
     print('scalar')
     print('sum', timed(np.sum, c) / timed(sum, py.values()))
-    print('dot', timed(c.dot, c) / timed(sum, (v + v for v in py.values())))
+    print('dot', timed(c.dot, c) / timed(sum, (py[k] * py[k] for k in py)))
 
 
 def dok(size):
