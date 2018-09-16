@@ -34,3 +34,10 @@ def test_math():
     assert vec.values() == np.array([4.0])
     mat *= 2
     assert vec.equal(*mat.values())
+
+
+def test_funcs():
+    mat = matrix({'a': [0]})
+    assert mat.map(np.sum, dtype=int) == {'a': 1}
+    assert mat.filter(len) == mat
+    assert not mat.filter(vector.dot, vector())

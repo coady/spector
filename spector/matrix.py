@@ -6,9 +6,12 @@ from .vector import vector
 
 class matrix(collections.defaultdict):
     """A sparse vector of vectors."""
-    def __init__(self, data=()):
+    def __init__(self, data=(), copy=True):
         super(matrix, self).__init__(vector)
-        self.update(data)
+        if copy:
+            self.update(data)
+        else:
+            super(matrix, self).update(data)
 
     @property
     def row(self):
@@ -39,8 +42,7 @@ class matrix(collections.defaultdict):
             for key in other:
                 self[key] += other[key]
         else:
-            for vec in self.values():
-                vec += other
+            self.map(vector.__iadd__, other)
         return self
 
     def __add__(self, other):
@@ -53,26 +55,31 @@ class matrix(collections.defaultdict):
             for key in self:
                 self[key] *= other[key]
         else:
-            for vec in self.values():
-                vec *= other
+            self.map(vector.__imul__, other)
         return self
 
     def __mul__(self, other):
-        result = type(self)()
         if isinstance(other, collections.Mapping):
-            for key in set(self).intersection(other):
-                result[key] = self[key] * other[key]
-        else:
-            for key in self:
-                result[key] = self[key] * other
-        return result
+            data = ((key, self[key] * other[key]) for key in set(self).intersection(other))
+            return type(self)(data, copy=False)
+        return self.map(vector.__mul__, other)
 
     def sum(self, axis=None):
         """Return sum of matrix elements across axis, by default both."""
         if axis in (0, -2):
             return functools.reduce(vector.__iadd__, self.values(), vector())
         if axis in (1, -1):
-            return {key: np.sum(self[key]) for key in self}
+            return dict(self.map(np.sum))
         if axis is None:
             return sum(map(np.sum, self.values()))
         raise np.AxisError("axis {} is out of bounds".format(axis))
+
+    def map(self, func, *args, **kwargs):
+        """Return matrix with function applies across vectors."""
+        data = ((key, func(self[key], *args, **kwargs)) for key in self)
+        return type(self)(data, copy=False)
+
+    def filter(self, func, *args, **kwargs):
+        """Return matrix with function applies across vectors."""
+        data = ((key, vec) for key, vec in self.items() if func(vec, *args, **kwargs))
+        return type(self)(data, copy=False)
