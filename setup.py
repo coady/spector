@@ -15,9 +15,12 @@ setup(
     license='Apache Software License',
     packages=['spector'],
     ext_modules=[ext_module],
+    install_requires=['numpy'],
+    python_requires='>=2.7',
+    tests_require=['pytest-cov'],
     keywords='sparse array vector matrix numpy scipy',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',

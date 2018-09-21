@@ -2,6 +2,21 @@ import collections
 import functools
 import numpy as np
 from .vector import vector
+try:
+    from future_builtins import zip
+except ImportError:
+    pass
+
+
+def groupby(keys, *columns):
+    """Generate unique keys with matching array slices, similiar to pandas' groupby."""
+    order = np.argsort(keys)
+    columns = [np.asarray(values)[order] for values in columns]
+    keys, counts = np.unique(keys, return_counts=True)
+    start = 0
+    for key, stop in zip(keys, counts.cumsum()):
+        yield (key,) + tuple(values[start:stop] for values in columns)
+        start = stop
 
 
 class matrix(collections.defaultdict):
@@ -83,3 +98,13 @@ class matrix(collections.defaultdict):
         """Return matrix with function applies across vectors."""
         data = ((key, vec) for key, vec in self.items() if func(vec, *args, **kwargs))
         return type(self)(data, copy=False)
+
+    @classmethod
+    def fromcoo(cls, row, col, data):
+        """Return matrix from COOrdinate format arrays."""
+        items = ((key, vector(col, data)) for key, col, data in groupby(row, col, data))
+        return cls(items, copy=False)
+
+    def transpose(self):
+        """Return matrix with reversed dimensions."""
+        return self.fromcoo(self.col, self.row, self.data)
