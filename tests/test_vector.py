@@ -32,6 +32,11 @@ def test_basic():
     assert set(vec.values()) == {0.0, 1.0, 0.0}
     vec.update(vector([1, 2]).keys())
     assert dict(vec.items()) == {0: 0.0, 1: 2.0, 2: 1.0}
+    assert vector(np.array([False]), np.array(['0']))
+    with pytest.raises(TypeError):
+        vector(np.array([0.0]))
+    with pytest.raises(ValueError):
+        vector(np.array([0]), np.array([' ']))
 
 
 def test_cmp():

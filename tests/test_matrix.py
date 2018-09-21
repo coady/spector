@@ -41,7 +41,7 @@ def test_funcs():
     assert mat.map(np.sum, dtype=int) == {'a': 1}
     assert mat.filter(len) == mat
     assert not mat.filter(vector.dot, vector())
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         mat.transpose()
     assert not matrix.fromcoo([], [], [])
     mat = matrix.fromcoo([0, 1, 0], [0, 1, 2], [1.0] * 3)

@@ -90,7 +90,7 @@ cdef class indices:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cdef fromarray(self, Py_ssize_t [:] keys):
-        cdef Py_ssize_t i, n = keys.size
+        cdef Py_ssize_t n = keys.size
         with nogil:
             for i in range(n):
                 self.data.insert(keys[i])
@@ -100,7 +100,7 @@ cdef class indices:
         if isinstance(keys, indices):
             self |= keys
         elif isinstance(keys, np.ndarray):
-            self.fromarray(keys)
+            self.fromarray(keys.astype(np.intp, casting='safe', copy=False))
         else:
             for key in keys:
                 self.data.insert(key)
@@ -291,13 +291,13 @@ cdef class vector:
             for p in self.data:
                 arr[i] = p.second
                 i += 1
-        return (result if dtype is float else result.astype(dtype))[:i]
+        return result.astype(dtype, copy=False)[:i]
     __array__ = values
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cdef fromarrays(self, Py_ssize_t [:] keys, double [:] values):
-        cdef Py_ssize_t i, n = min(keys.size, values.size)
+        cdef Py_ssize_t n = min(keys.size, values.size)
         with nogil:
             for i in range(n):
                 self.data[keys[i]] += values[i]
@@ -307,9 +307,8 @@ cdef class vector:
         if isinstance(keys, vector):
             self += keys
         elif isinstance(keys, np.ndarray):
-            if not isinstance(values, np.ndarray):
-                values = np.full(len(keys), values)
-            self.fromarrays(keys, values.astype(float))
+            values = np.asfarray(values if isinstance(values, np.ndarray) else np.full(len(keys), values))
+            self.fromarrays(keys.astype(np.intp, casting='safe', copy=False), values)
         elif isinstance(keys, collections.Mapping):
             for key in keys:
                 self.data[key] += keys[key]

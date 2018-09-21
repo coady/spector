@@ -9,6 +9,9 @@ def test_basic():
     assert len(ind) == 0
     assert 0 not in ind
     assert list(ind) == []
+    assert indices(np.array([False]))
+    with pytest.raises(TypeError):
+        indices(np.array([0.0]))
 
     assert ind.add(0)
     assert not ind.add(0)
