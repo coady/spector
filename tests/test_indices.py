@@ -61,6 +61,7 @@ def test_sets():
     z |= y
     assert z is x and z == indices([0, 1, 2])
     z -= y
+    z -= y  # smaller vector is iterated
     assert z is x and z == indices([0])
     z &= y
     assert z is x and z == indices()

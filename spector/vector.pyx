@@ -2,6 +2,7 @@
 import collections
 import numpy as np
 from cython.operator cimport dereference as deref
+from libc.math cimport fmin, fmax, pow
 from libcpp cimport bool
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
@@ -10,6 +11,14 @@ try:
     from future_builtins import zip
 except ImportError:
     pass
+
+
+cdef inline double fadd(double x, double y) nogil:
+    return x + y
+
+
+cdef inline double fmul(double x, double y) nogil:
+    return x * y
 
 
 cdef class indices:
@@ -124,36 +133,37 @@ cdef class indices:
     def __xor__(self, indices other):
         return type(self)(self).__ixor__(other)
 
-    def __iand__(self, indices other):
+    cdef void ifilter(self, indices other, int count) nogil:
+        for k in self.data:
+            if other.data.count(k) != count:
+                self.data.erase(k)
+
+    def __iand__(self, other):
+        self.ifilter(other, 1)
+        return self
+
+    cdef filter(self, indices other, int count):
+        cdef indices result = type(self)()
         with nogil:
             for k in self.data:
-                if not other.data.count(k):
-                    self.data.erase(k)
-        return self
+                if other.data.count(k) == count:
+                    result.data.insert(k)
+        return result
 
     def __and__(indices self, indices other):
-        if len(other) < len(self):
-            return other & self
-        cdef indices result = type(self)()
-        with nogil:
-            for k in self.data:
-                if other.data.count(k):
-                    result.data.insert(k)
-        return result
+        return other.filter(self, 1) if len(other) < len(self) else self.filter(other, 1)
 
     def __isub__(self, indices other):
-        with nogil:
-            for k in other.data:
-                self.data.erase(k)
+        if len(other) < len(self):
+            with nogil:
+                for k in other.data:
+                    self.data.erase(k)
+        else:
+            self.ifilter(other, 0)
         return self
 
-    def __sub__(indices self, indices other):
-        cdef indices result = type(self)()
-        with nogil:
-            for k in self.data:
-                if not other.data.count(k):
-                    result.data.insert(k)
-        return result
+    def __sub__(indices self, other):
+        return self.filter(other, 0)
 
     @classmethod
     def fromdense(cls, values):
@@ -330,92 +340,72 @@ cdef class vector:
         """Return element-wise maximum vector."""
         return type(self)(self.keys(), self.map(np.maximum, value))
 
-    cdef iadd(self, double value):
-        with nogil:
-            for p in self.data:
-                self.data[p.first] = p.second + value
-        return self
+    cdef void imap(self, double value, double (*op)(double, double) nogil) nogil:
+        for p in self.data:
+            self.data[p.first] = op(p.second, value)
+
+    cdef void ior(self, vector other, double (*op)(double, double) nogil) nogil:
+        for p in other.data:
+            self.data[p.first] = op(self.data[p.first], p.second)
 
     def __iadd__(self, value):
-        if not isinstance(value, vector):
-            return self.iadd(value)
-        cdef vector other = value
-        with nogil:
-            for p in other.data:
-                self.data[p.first] += p.second
+        if isinstance(value, vector):
+            self.ior(value, fadd)
+        else:
+            self.imap(value, fadd)
         return self
 
     def __add__(self, value):
         return type(self)(self).__iadd__(value)
 
-    def __isub__(self, value):
-        return self.iadd(-value)
+    def __isub__(self, double value):
+        return self.__iadd__(-value)
 
     def __sub__(self, value):
         return type(self)(self).__isub__(value)
 
-    cdef imul(self, double value):
-        with nogil:
-            for p in self.data:
-                self.data[p.first] = p.second * value
-        return self
+    cdef void iand(self, vector other, double (*op)(double, double) nogil) nogil:
+        for p in self.data:
+            it = other.data.find(p.first)
+            if it != other.data.end():
+                self.data[p.first] = op(p.second, deref(it).second)
+            else:
+                self.data.erase(p.first)
 
     def __imul__(self, value):
-        if not isinstance(value, vector):
-            return self.imul(value)
-        cdef vector other = value
-        with nogil:
-            for p in self.data:
-                it = other.data.find(p.first)
-                if it != other.data.end():
-                    self.data[p.first] = p.second * deref(it).second
-                else:
-                    self.data.erase(p.first)
+        if isinstance(value, vector):
+            self.iand(value, fmul)
+        else:
+            self.imap(value, fmul)
         return self
 
-    def __mul__(vector self, value):
-        if not isinstance(value, vector):
-            return type(self)(self).__imul__(value)
-        cdef vector other = value
-        if len(other) < len(self):
-            return other * self
+    cdef and_(self, vector other, double (*op)(double, double) nogil):
         cdef vector result = type(self)()
         with nogil:
             for p in self.data:
                 it = other.data.find(p.first)
                 if it != other.data.end():
-                    result.data[p.first] = p.second * deref(it).second
+                    result.data[p.first] = op(p.second, deref(it).second)
         return result
 
-    def __ior__(self, vector other):
-        with nogil:
-            for p in other.data:
-                self.data[p.first] = max(self.data[p.first], p.second)
+    def __mul__(vector self, value):
+        if not isinstance(value, vector):
+            return type(self)(self).__imul__(value)
+        return (value * self) if len(value) < len(self) else self.and_(value, fmul)
+
+    def __ior__(self, other):
+        self.ior(other, fmax)
         return self
 
     def __or__(self, vector other):
         return type(self)(self).__ior__(other)
 
-    def __iand__(self, vector other):
-        with nogil:
-            for p in self.data:
-                it = other.data.find(p.first)
-                if it != other.data.end():
-                    self.data[p.first] = min(p.second, deref(it).second)
-                else:
-                    self.data.erase(p.first)
+    def __iand__(self, other):
+        self.iand(other, fmin)
         return self
 
-    def __and__(vector self, vector other):
-        if len(other) < len(self):
-            return other & self
-        cdef vector result = type(self)()
-        with nogil:
-            for p in self.data:
-                it = other.data.find(p.first)
-                if it != other.data.end():
-                    result.data[p.first] = min(p.second, deref(it).second)
-        return result
+    def __and__(vector self, other):
+        return (other & self) if len(other) < len(self) else self.and_(other, fmin)
 
     def __ixor__(self, vector other):
         with nogil:
@@ -449,18 +439,13 @@ cdef class vector:
     __matmul__ = dot
 
     def __itruediv__(self, double value):
-        with nogil:
-            for p in self.data:
-                self.data[p.first] = p.second / value
-        return self
+        return self.__imul__(1.0 / value)
 
     def __truediv__(self, value):
         return type(self)(self).__itruediv__(value)
 
-    def __ipow__(self, double value):
-        with nogil:
-            for p in self.data:
-                self.data[p.first] = p.second ** value
+    def __ipow__(self, value):
+        self.imap(value, pow)
         return self
 
     def __pow__(self, value, modulo):
