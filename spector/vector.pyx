@@ -46,30 +46,25 @@ cdef class indices:
         for k in self.data:
             yield k
 
-    cdef bool issubset(self, indices other) nogil:
+    cdef bool all(self, indices other, size_t count) nogil:
         for k in self.data:
-            if not other.data.count(k):
+            if other.data.count(k) != count:
                 return False
         return True
 
     def __eq__(self, other):
-        return isinstance(other, indices) and len(self) == len(other) and self.issubset(other)
+        return isinstance(other, indices) and len(self) == len(other) and self.all(other, 1)
 
     def __le__(self, indices other):
-        return len(self) <= len(other) and self.issubset(other)
+        return len(self) <= len(other) and self.all(other, 1)
 
     def __lt__(self, indices other):
-        return len(self) < len(other) and self.issubset(other)
-
-    cdef bool intersects(self, indices other) nogil:
-        for k in self.data:
-            if other.data.count(k):
-                return True
-        return False
+        return len(self) < len(other) and self.all(other, 1)
 
     def isdisjoint(self, indices other):
         """Return whether two indices have a null intersection."""
-        return not (other.intersects(self) if len(other) < len(self) else self.intersects(other))
+        self, other = sorted([self, other], key=len)
+        return self.all(other, 0)
 
     def add(self, Py_ssize_t key):
         """Add an index key."""
@@ -120,7 +115,7 @@ cdef class indices:
                 self.data.insert(k)
         return self
 
-    def __or__(self, indices other):
+    def __or__(indices self, indices other):
         return type(self)(self).__ior__(other)
 
     def __ixor__(self, indices other):
@@ -130,19 +125,19 @@ cdef class indices:
                     self.data.erase(k)
         return self
 
-    def __xor__(self, indices other):
+    def __xor__(indices self, indices other):
         return type(self)(self).__ixor__(other)
 
-    cdef void ifilter(self, indices other, int count) nogil:
+    cdef void ifilter(self, indices other, size_t count) nogil:
         for k in self.data:
             if other.data.count(k) != count:
                 self.data.erase(k)
 
-    def __iand__(self, other):
+    def __iand__(self, indices other):
         self.ifilter(other, 1)
         return self
 
-    cdef filter(self, indices other, int count):
+    cdef filter(self, indices other, size_t count):
         cdef indices result = type(self)()
         with nogil:
             for k in self.data:
@@ -151,7 +146,8 @@ cdef class indices:
         return result
 
     def __and__(indices self, indices other):
-        return other.filter(self, 1) if len(other) < len(self) else self.filter(other, 1)
+        self, other = sorted([self, other], key=len)
+        return self.filter(other, 1)
 
     def __isub__(self, indices other):
         if len(other) < len(self):
@@ -162,7 +158,7 @@ cdef class indices:
             self.ifilter(other, 0)
         return self
 
-    def __sub__(indices self, other):
+    def __sub__(indices self, indices other):
         return self.filter(other, 0)
 
     @classmethod
@@ -355,13 +351,20 @@ cdef class vector:
             self.imap(value, fadd)
         return self
 
+    cdef rop(self, ufunc, double value):
+        return type(self)(self.keys(), ufunc(value, self))
+
     def __add__(self, value):
+        if not isinstance(self, vector):
+            return (<vector> value).rop(np.add, self)
         return type(self)(self).__iadd__(value)
 
     def __isub__(self, double value):
         return self.__iadd__(-value)
 
     def __sub__(self, value):
+        if not isinstance(self, vector):
+            return (<vector> value).rop(np.subtract, self)
         return type(self)(self).__isub__(value)
 
     cdef void iand(self, vector other, double (*op)(double, double) nogil) nogil:
@@ -388,24 +391,28 @@ cdef class vector:
                     result.data[p.first] = op(p.second, deref(it).second)
         return result
 
-    def __mul__(vector self, value):
+    def __mul__(self, value):
+        if not isinstance(self, vector):
+            return (<vector> value).rop(np.multiply, self)
         if not isinstance(value, vector):
             return type(self)(self).__imul__(value)
-        return (value * self) if len(value) < len(self) else self.and_(value, fmul)
+        self, other = sorted([self, value], key=len)
+        return (<vector> self).and_(other, fmul)
 
-    def __ior__(self, other):
+    def __ior__(self, vector other):
         self.ior(other, fmax)
         return self
 
-    def __or__(self, vector other):
+    def __or__(vector self, vector other):
         return type(self)(self).__ior__(other)
 
-    def __iand__(self, other):
+    def __iand__(self, vector other):
         self.iand(other, fmin)
         return self
 
-    def __and__(vector self, other):
-        return (other & self) if len(other) < len(self) else self.and_(other, fmin)
+    def __and__(vector self, vector other):
+        self, other = sorted([self, other], key=len)
+        return self.and_(other, fmin)
 
     def __ixor__(self, vector other):
         with nogil:
@@ -414,7 +421,7 @@ cdef class vector:
                     self.data[p.first] = p.second
         return self
 
-    def __xor__(self, vector other):
+    def __xor__(vector self, vector other):
         return type(self)(self).__ixor__(other)
 
     def difference(self, keys):
@@ -428,29 +435,35 @@ cdef class vector:
         return result
 
     def dot(self, vector other):
-        """Return dot product."""
-        if len(other) < len(self):
-            return other.dot(self)
+        """For Python 2 only; @ preferred."""
+        self, other = sorted([self, other], key=len)
         cdef double total = 0.0
         with nogil:
             for p in self.data:
                 total += p.second * other.get(p.first)
         return total
-    __matmul__ = dot
+    
+    def __matmul__(vector self, vector other):
+        """Return vector dot product."""
+        return self.dot(other)
 
     def __itruediv__(self, double value):
         return self.__imul__(1.0 / value)
 
     def __truediv__(self, value):
+        if not isinstance(self, vector):
+            return (<vector> value).rop(np.true_divide, self)
         return type(self)(self).__itruediv__(value)
 
-    def __ipow__(self, value):
+    def __ipow__(self, double value):
         self.imap(value, pow)
         return self
 
     def __pow__(self, value, modulo):
         if modulo is not None:
             raise TypeError("pow() with modulo unsupported")
+        if not isinstance(self, vector):
+            return (<vector> value).rop(np.power, self)
         return type(self)(self).__ipow__(value)
 
     @classmethod
