@@ -341,6 +341,7 @@ cdef class vector:
             self.data[p.first] = op(p.second, value)
 
     cdef void ior(self, vector other, double (*op)(double, double) nogil) nogil:
+        self.data.reserve(other.data.size())
         for p in other.data:
             self.data[p.first] = op(self.data[p.first], p.second)
 
@@ -442,7 +443,7 @@ cdef class vector:
             for p in self.data:
                 total += p.second * other.get(p.first)
         return total
-    
+
     def __matmul__(vector self, vector other):
         """Return vector dot product."""
         return self.dot(other)

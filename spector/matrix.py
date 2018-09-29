@@ -28,6 +28,10 @@ class matrix(collections.defaultdict):
         else:
             super(matrix, self).update(data)
 
+    @classmethod
+    def cast(cls, data):
+        return cls(data, copy=False)
+
     @property
     def row(self):
         """COO format row index array of the matrix"""
@@ -75,8 +79,7 @@ class matrix(collections.defaultdict):
 
     def __mul__(self, other):
         if isinstance(other, collections.Mapping):
-            data = ((key, self[key] * other[key]) for key in set(self).intersection(other))
-            return type(self)(data, copy=False)
+            return self.cast((key, self[key] * other[key]) for key in set(self).intersection(other))
         return self.map(vector.__mul__, other)
 
     def sum(self, axis=None):
@@ -84,27 +87,29 @@ class matrix(collections.defaultdict):
         if axis in (0, -2):
             return functools.reduce(vector.__iadd__, self.values(), vector())
         if axis in (1, -1):
-            return dict(self.map(np.sum))
+            return self.map(np.sum)
         if axis is None:
             return sum(map(np.sum, self.values()))
         raise np.AxisError("axis {} is out of bounds".format(axis))
 
     def map(self, func, *args, **kwargs):
         """Return matrix with function applies across vectors."""
-        data = ((key, func(self[key], *args, **kwargs)) for key in self)
-        return type(self)(data, copy=False)
+        result = {key: func(self[key], *args, **kwargs) for key in self}
+        return self.cast(result) if all(isinstance(value, vector) for value in result.values()) else result
 
     def filter(self, func, *args, **kwargs):
         """Return matrix with function applies across vectors."""
-        data = ((key, vec) for key, vec in self.items() if func(vec, *args, **kwargs))
-        return type(self)(data, copy=False)
+        return self.cast((key, vec) for key, vec in self.items() if func(vec, *args, **kwargs))
 
     @classmethod
     def fromcoo(cls, row, col, data):
         """Return matrix from COOrdinate format arrays."""
-        items = ((key, vector(col, data)) for key, col, data in groupby(row, col, data))
-        return cls(items, copy=False)
+        return cls.cast((key, vector(col, data)) for key, col, data in groupby(row, col, data))
 
     def transpose(self):
         """Return matrix with reversed dimensions."""
         return self.fromcoo(self.col, self.row, self.data)
+
+    def __matmul__(self, other):
+        other = other.transpose()
+        return self.cast((key, vector(other.map(self[key].dot))) for key in self)
