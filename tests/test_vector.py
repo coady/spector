@@ -70,10 +70,9 @@ def test_cmp():
 
 
 def test_dense():
-    arr = np.array(range(4))
-    vec = vector.fromdense(arr)
+    vec = vector.fromdense(range(4))
     assert dict(vec) == {1: 1, 2: 2, 3: 3}
-    assert np.array_equal(vec.todense(), arr)
+    assert np.array_equal(vec.todense(), np.arange(4, dtype=float))
     assert list(vec.todense(5)) == [0, 1, 2, 3, 0]
     with pytest.raises(IndexError):
         vec.todense(3)
@@ -151,3 +150,17 @@ def test_sets():
     assert vec.equal(vector({2: 1.0, 3: 1.0}))
     vec ^= other
     assert vec.equal(vector({1: 0.0}))
+
+
+def test_reduce():
+    vec = vector(dict(enumerate(range(5))))
+    assert np.sum(vec, initial=0.5) == 10.5
+    assert np.sum(vec, initial=0.5, dtype=int) == 10
+    assert np.min(vec) == 0.0
+    assert np.max(vec) == 4.0
+    vec.clear()
+    assert np.min(vec, initial=0) == np.max(vec, initial=0) == 0
+    with pytest.raises(ValueError):
+        np.min(vec)
+    with pytest.raises(ValueError):
+        np.max(vec)

@@ -195,20 +195,19 @@ cdef class vector:
 
     def __getitem__(self, key):
         if isinstance(key, collections.Iterable):
-            return type(self)(key).__imul__(self)  # keys are typically a subset
+            result = type(self)(np.asarray(key), 0.0)
+            (<vector> result).iand(self, fadd)
+            return result
         return self.get(key)
 
-    def __setitem__(self, key, value):
-        if isinstance(key, collections.Iterable):
-            other = vector(key, value)
-            with nogil:
-                for p in other.data:
-                    self.data[p.first] = p.second
-        else:
-            self.data[key] = value
+    def __setitem__(self, key, double value):
+        keys = indices(np.asarray(key) if isinstance(key, collections.Iterable) else [key])
+        with nogil:
+            for k in keys.data:
+                self.data[k] = value
 
     def __delitem__(self, key):
-        keys = indices(key if isinstance(key, collections.Iterable) else [key])
+        keys = indices(np.asarray(key) if isinstance(key, collections.Iterable) else [key])
         with nogil:
             for k in keys.data:
                 self.data.erase(k)
@@ -470,6 +469,7 @@ cdef class vector:
     @classmethod
     def fromdense(cls, values):
         """Return vector from a dense array representation."""
+        values = np.asfarray(values)
         keys, = np.nonzero(values)
         return cls(keys, values[keys])
 
@@ -479,3 +479,20 @@ cdef class vector:
         result = np.zeros(keys.max() + 1 if size is None else size, dtype)
         result[keys] = self.values()
         return result
+
+    cdef double reduce(self, double (*op)(double, double) nogil, double initial) nogil:
+        for p in self.data:
+            initial = op(initial, p.second)
+        return initial
+
+    def sum(self, **kwargs):
+        """Return sum of values."""
+        return np.sum(self.reduce(fadd, 0.0), **kwargs)
+
+    def min(self, **kwargs):
+        """Return minimum value."""
+        return np.min(self.reduce(fmin, float('inf')) if self else (), **kwargs)
+
+    def max(self, **kwargs):
+        """Return maximum value."""
+        return np.max(self.reduce(fmax, float('-inf')) if self else (), **kwargs)
