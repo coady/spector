@@ -154,12 +154,11 @@ def test_sets():
 
 def test_reduce():
     vec = vector(dict(enumerate(range(5))))
-    assert np.sum(vec, initial=0.5) == 10.5
-    assert np.sum(vec, initial=0.5, dtype=int) == 10
+    assert np.sum(vec) == 10.0
+    assert np.sum(vec, dtype=int) == 10
     assert np.min(vec) == 0.0
     assert np.max(vec) == 4.0
     vec.clear()
-    assert np.min(vec, initial=0) == np.max(vec, initial=0) == 0
     with pytest.raises(ValueError):
         np.min(vec)
     with pytest.raises(ValueError):

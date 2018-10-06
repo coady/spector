@@ -93,11 +93,9 @@ cdef class indices:
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    cdef fromarray(self, Py_ssize_t [:] keys):
-        cdef Py_ssize_t n = keys.size
-        with nogil:
-            for i in range(n):
-                self.data.insert(keys[i])
+    cdef void fromarray(self, Py_ssize_t [:] keys) nogil:
+        for i in range(keys.shape[0]):
+            self.data.insert(keys[i])
 
     def update(self, keys):
         """Update from indices, array, or iterable."""
@@ -200,17 +198,28 @@ cdef class vector:
             return result
         return self.get(key)
 
-    def __setitem__(self, key, double value):
-        keys = indices(np.asarray(key) if isinstance(key, collections.Iterable) else [key])
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cdef assign(self, keys, double* value):
+        cdef Py_ssize_t [:] arr = np.asarray(keys).astype(np.intp, casting='safe', copy=False)
         with nogil:
-            for k in keys.data:
-                self.data[k] = value
+            for i in range(arr.shape[0]):
+                if value:
+                    self.data[arr[i]] = value[0]
+                else:
+                    self.data.erase(arr[i])
+
+    def __setitem__(self, key, double value):
+        if isinstance(key, collections.Iterable):
+            self.assign(key, &value)
+        else:
+            self.data[key] = value
 
     def __delitem__(self, key):
-        keys = indices(np.asarray(key) if isinstance(key, collections.Iterable) else [key])
-        with nogil:
-            for k in keys.data:
-                self.data.erase(k)
+        if isinstance(key, collections.Iterable):
+            self.assign(key, NULL)
+        else:
+            self.data.erase(<Py_ssize_t> key)
 
     def __contains__(self, Py_ssize_t key):
         return self.data.count(key)
@@ -301,11 +310,9 @@ cdef class vector:
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    cdef fromarrays(self, Py_ssize_t [:] keys, double [:] values):
-        cdef Py_ssize_t n = min(keys.size, values.size)
-        with nogil:
-            for i in range(n):
-                self.data[keys[i]] += values[i]
+    cdef void fromarrays(self, Py_ssize_t [:] keys, double [:] values) nogil:
+        for i in range(min(keys.shape[0], values.shape[0])):
+            self.data[keys[i]] += values[i]
 
     def update(self, keys, values=1.0):
         """Update from vector, arrays, mapping, or keys with scalar."""
