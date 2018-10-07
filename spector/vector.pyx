@@ -205,7 +205,7 @@ cdef class vector:
         with nogil:
             for i in range(arr.shape[0]):
                 if value:
-                    self.data[arr[i]] = value[0]
+                    self.data[arr[i]] = deref(value)
                 else:
                     self.data.erase(arr[i])
 
@@ -503,3 +503,24 @@ cdef class vector:
     def max(self, **kwargs):
         """Return maximum value."""
         return np.max(self.reduce(fmax, float('-inf')) if self else (), **kwargs)
+
+    cdef Py_ssize_t find(self, double value) nogil:
+        for p in self.data:
+            if p.second == value:
+                return p.first
+
+    def argmin(self, **kwargs):
+        """Return key with minimum value."""
+        return self.find(self.min(**kwargs))
+
+    def argmax(self, **kwargs):
+        """Return key with maximum value."""
+        return self.find(self.max(**kwargs))
+
+    def argpartition(self, kth, **kwargs):
+        """Return keys partitioned by values."""
+        return self.keys()[np.argpartition(self.values(), kth, **kwargs)]
+
+    def argsort(self, **kwargs):
+        """Return keys sorted by values."""
+        return self.keys()[np.argsort(self.values(), **kwargs)]

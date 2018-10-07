@@ -163,3 +163,16 @@ def test_reduce():
         np.min(vec)
     with pytest.raises(ValueError):
         np.max(vec)
+
+
+def test_arg():
+    vec = vector(dict(enumerate(range(5, 0, -1))))
+    assert list(np.argsort(vec)) == [4, 3, 2, 1, 0]
+    keys = np.argpartition(vec, 2)
+    assert set(keys[:2]) == {3, 4} and keys[2] == 2
+    assert np.argmin(vec) == 4
+    assert np.argmax(vec) == 0
+    with pytest.raises(ValueError):
+        np.argmin(vector())
+    with pytest.raises(ValueError):
+        np.argmax(vector())
