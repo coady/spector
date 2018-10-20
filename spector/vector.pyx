@@ -266,7 +266,7 @@ cdef class vector:
     def map(self, ufunc, *args, **kwargs):
         """Return element-wise array of values from applying function across vectors."""
         args = [self.apply(arg) if isinstance(arg, vector) else arg for arg in args]
-        return ufunc(self, *args, **kwargs)
+        return ufunc(self.values(), *args, **kwargs)
 
     def filter(self, ufunc, *args, **kwargs):
         """Return element-wise array of keys from applying predicate across vectors."""
@@ -537,8 +537,11 @@ cdef class vector:
 
     def argpartition(self, kth, **kwargs):
         """Return keys partitioned by values."""
-        return self.keys()[np.argpartition(self.values(), kth, **kwargs)]
+        return self.filter(np.argpartition, kth, **kwargs)
 
     def argsort(self, **kwargs):
         """Return keys sorted by values."""
-        return self.keys()[np.argsort(self.values(), **kwargs)]
+        return self.filter(np.argsort, **kwargs)
+
+    def nonzero(self):
+        return self.filter(np.nonzero),
