@@ -1,7 +1,7 @@
 # distutils: language=c++
 import collections
 import numpy as np
-from cython.operator cimport dereference as deref
+from cython.operator cimport dereference as deref, postincrement as inc
 from libc.math cimport fmin, fmax, pow
 from libcpp cimport bool
 from libcpp.unordered_map cimport unordered_map
@@ -19,6 +19,28 @@ cdef inline double fadd(double x, double y) nogil:
 
 cdef inline double fmul(double x, double y) nogil:
     return x * y
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def arggroupby(Py_ssize_t [:] keys):
+    """Generate unique keys with corresponding index arrays."""
+    grouped = np.empty(keys.size, np.intp)
+    cdef Py_ssize_t [:] values = grouped
+    cdef Py_ssize_t size = 0
+    cdef unordered_map[Py_ssize_t, Py_ssize_t] sizes
+    with nogil:
+        for i in range(keys.shape[0]):
+            inc(sizes[keys[i]])
+        for p in sizes:
+            sizes[p.first] = size
+            size += p.second
+        for i in range(keys.shape[0]):
+            values[inc(sizes[keys[i]])] = i
+    start = 0
+    for p in sizes:
+        yield p.first, grouped[start:p.second]
+        start = p.second
 
 
 cdef class indices:
@@ -87,8 +109,7 @@ cdef class indices:
         cdef Py_ssize_t i = 0
         with nogil:
             for k in self.data:
-                arr[i] = k
-                i += 1
+                arr[inc(i)] = k
         return result[:i]
 
     @cython.boundscheck(False)
@@ -239,8 +260,7 @@ cdef class vector:
         cdef Py_ssize_t i = 0
         with nogil:
             for p in self.data:
-                arr[i] = other.get(p.first)
-                i += 1
+                arr[inc(i)] = other.get(p.first)
         return result[:i]
 
     def map(self, ufunc, *args, **kwargs):
@@ -291,8 +311,7 @@ cdef class vector:
         cdef Py_ssize_t i = 0
         with nogil:
             for p in self.data:
-                arr[i] = p.first
-                i += 1
+                arr[inc(i)] = p.first
         return result[:i]
 
     @cython.wraparound(False)
@@ -303,8 +322,7 @@ cdef class vector:
         cdef Py_ssize_t i = 0
         with nogil:
             for p in self.data:
-                arr[i] = p.second
-                i += 1
+                arr[inc(i)] = p.second
         return result.astype(dtype, copy=False)[:i]
     __array__ = values
 

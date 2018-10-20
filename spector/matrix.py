@@ -1,7 +1,7 @@
 import collections
 import functools
 import numpy as np
-from .vector import vector
+from .vector import arggroupby, vector
 try:
     from future_builtins import zip
 except ImportError:
@@ -10,9 +10,10 @@ except ImportError:
 
 def groupby(keys, *columns):
     """Generate unique keys with matching array slices, similiar to pandas' groupby."""
+    keys = np.asarray(keys)
     order = np.argsort(keys)
     columns = [np.asarray(values)[order] for values in columns]
-    keys, counts = np.unique(keys, return_counts=True)
+    keys, counts = np.unique(keys[order], return_counts=True)
     start = 0
     for key, stop in zip(keys, counts.cumsum()):
         yield (key,) + tuple(values[start:stop] for values in columns)
@@ -104,7 +105,12 @@ class matrix(collections.defaultdict):
     @classmethod
     def fromcoo(cls, row, col, data):
         """Return matrix from COOrdinate format arrays."""
-        return cls.cast((key, vector(col, data)) for key, col, data in groupby(row, col, data))
+        row, col, data = map(np.asarray, [row, col, data])
+        try:
+            row = row.astype(np.intp, casting='safe', copy=False)
+        except TypeError:  # fallback to sorting
+            return cls.cast((key, vector(col, data)) for key, col, data in groupby(row, col, data))
+        return cls.cast((key, vector(col[group], data[group])) for key, group in arggroupby(row))
 
     def transpose(self):
         """Return matrix with reversed dimensions."""

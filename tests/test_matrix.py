@@ -50,3 +50,5 @@ def test_funcs():
     mat = mat.__matmul__(mat.transpose())
     assert dict(mat[0]) == {0: 5.0, 1: 11.0}
     assert dict(mat[1]) == {0: 11.0, 1: 25.0}
+    mat = matrix.fromcoo(list('abcba'), range(5), [1] * 5)
+    assert mat.map(len) == {'a': 2, 'b': 2, 'c': 1}

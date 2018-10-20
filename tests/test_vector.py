@@ -2,6 +2,7 @@ from __future__ import division
 import numpy as np
 import pytest
 from spector import vector
+from spector.vector import arggroupby
 
 
 def test_basic():
@@ -176,3 +177,5 @@ def test_arg():
         np.argmin(vector())
     with pytest.raises(ValueError):
         np.argmax(vector())
+    arr = np.array([10, 20, 30, 20, 10])
+    assert {key: list(values) for key, values in arggroupby(arr)} == {10: [0, 4], 20: [1, 3], 30: [2]}
