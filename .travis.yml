@@ -1,11 +1,14 @@
+dist: xenial
 language: python
 
 python:
   - 2.7
+  - 3.5
   - 3.6
+  - 3.7
 
 install:
-  - pip install cython pytest-cov codecov
+  - pip install cython "pytest>=3.7.2"" pytest-cov codecov
 
 script:
   - cythonize spector/*.pyx
@@ -14,3 +17,13 @@ script:
 
 after_success:
   - codecov
+
+deploy:
+  provider: pypi
+  user: coady
+  password:
+    secure: A1jqkWV/IT6ISnr+WXqAVflG8VlvUKUyUDe7Ta2Hwr/fcYDIR182tMQJ0ri5oeYn1aSRnfBoXQXRXOVpRiy87uwGXYrW2sr6INQQnoWSGPVgbIYBkFfM/nZKIuPA+1ioqgxBhYnfrpyZtoG7fbV4/gK4JDb66ZubdrogQk36oOaHpJJFM534YjoKvhXkJoDzux2vATsG+LtY++x0pZ7rhaeBhuM4/1aKdPO9qKTOj5y4JSFmJ+T0nYYaiktpHKQG2oJhd0S7TpWcyctbYzWMPq625GAHRHTz0Ca7350NJM2UiPWDkppxEkUmGW3Pmw10nVPvAncyBMoO+N6yI2GzrIa0eLESiYvFyzoqGwdQHQS7F6t95kPNfl0wyBk3aFSj7vP678J3/AUFc9zzPvRdHUToin1UB5vT3SWibxVLC3Gx0ppLX/7caU5cTLPyN4ZZ0cgBSJwa3xPEPm497uoRUs5ZZWqdkpwGSJkYKQYuSfQ/aaLGfn1s1vfjA+D9XS2pE2F7tK/UnCyD7r/PiPor557ptfydNIKy4YtcsMCHhq5l8Yj6Ubqm0znYfPWSx5cOKDmcdmPsJhBheraVy91DjrZJd5U5qVYwlBeDP5Y20DfJpHBgS1PJJ084Mdm91RjsZalTwSqa6Zp2hwMc1+KLJlDZWE37sLHiA9skrI925BI=
+  on:
+    tags: true
+  distributions: "sdist bdist_wheel"
+  skip_existing: true
