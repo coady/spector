@@ -3,6 +3,7 @@
 ![image](https://img.shields.io/pypi/status/spector.svg)
 [![image](https://img.shields.io/travis/coady/spector.svg)](https://travis-ci.org/coady/spector)
 [![image](https://img.shields.io/codecov/c/github/coady/spector.svg)](https://codecov.io/github/coady/spector)
+[![image](https://readthedocs.org/projects/spector/badge)](https://spector.readthedocs.io)
 [![image](https://requires.io/github/coady/spector/requirements.svg)](https://requires.io/github/coady/spector/requirements/)
 [![image](https://api.codeclimate.com/v1/badges/6ffbd68facb9ef4acfef/maintainability)](https://codeclimate.com/github/coady/spector/maintainability)
 

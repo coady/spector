@@ -1,7 +1,6 @@
 all:
-	cythonize spector/*.pyx
-	python2 setup.py build_ext -i
 	python3 setup.py build_ext -i
+	python2 setup.py build_ext -i
 
 check: all
 	python3 setup.py $@ -ms
@@ -14,6 +13,7 @@ html:
 	cythonize -aX linetrace=True spector/*.pyx
 	python3 setup.py build_ext -i --define CYTHON_TRACE --define CYTHON_TRACE_NOGIL
 	pytest --cov --cov-report $@
+	make -C docs $@
 
 dist: all
 	python3 setup.py sdist bdist_wheel

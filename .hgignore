@@ -5,3 +5,4 @@ syntax: glob
 *.cpp
 *.so
 *.o
+docs/_build
