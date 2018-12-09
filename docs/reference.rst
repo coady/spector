@@ -5,14 +5,12 @@ Reference
 indices
 ^^^^^^^^^^^
 .. autoclass:: indices
-   :show-inheritance:
    :members:
    :special-members:
 
 vector
 ^^^^^^^^^^^
 .. autoclass:: vector
-   :show-inheritance:
    :members:
    :special-members:
 
@@ -21,4 +19,7 @@ matrix
 .. autoclass:: matrix
    :show-inheritance:
    :members:
-   :special-members:
+
+   .. automethod:: __add__
+   .. automethod:: __mul__
+   .. automethod:: __matmul__

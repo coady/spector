@@ -24,10 +24,10 @@ setup(
     ext_modules=cythonize([ext_module]) if cythonize else [ext_module],
     install_requires=['numpy'],
     extras_require={
-        'docs': ['cython', 'm2r'],
+        'docs': ['cython', 'm2r',  'nbsphinx', 'jupyter'],
     },
     python_requires='>=2.7',
-    tests_require=['pytest>=3.7.2', 'pytest-cov'],
+    tests_require=['pytest-cov'],
     keywords='sparse array vector matrix numpy scipy',
     classifiers=[
         'Development Status :: 3 - Alpha',
