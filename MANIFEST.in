@@ -1,3 +1,3 @@
 include LICENSE.txt
 recursive-include tests *.py
-recursive-include spector *.pyx
+recursive-include spector *.pyx *.cpp
