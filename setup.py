@@ -24,7 +24,7 @@ setup(
     ext_modules=cythonize([ext_module]) if cythonize else [ext_module],
     install_requires=['numpy'],
     extras_require={
-        'docs': ['cython', 'm2r',  'nbsphinx', 'jupyter'],
+        'docs': ['cython', 'm2r',  'nbsphinx', 'jupyter', 'pandas'],
     },
     python_requires='>=2.7',
     tests_require=['pytest-cov'],
