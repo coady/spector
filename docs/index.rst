@@ -11,6 +11,7 @@ Welcome to spector's documentation.
 
    readme
    reference
+   examples
    benchmarks
 
 Indices and tables
