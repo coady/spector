@@ -1,4 +1,5 @@
 # distutils: language=c++
+# cython: language_level=3, boundscheck=False, wraparound=False
 import collections
 import numpy as np
 from cython.operator cimport dereference as deref, postincrement as inc
@@ -21,8 +22,6 @@ cdef inline double fmul(double x, double y) nogil:
     return x * y
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def arggroupby(Py_ssize_t [:] keys):
     """Generate unique keys with corresponding index arrays."""
     grouped = np.empty(keys.size, np.intp)
@@ -101,7 +100,7 @@ cdef class indices:
         with nogil:
             self.data.clear()
 
-    @cython.wraparound(False)
+    @cython.boundscheck(True)
     def __array__(self):
         """Return keys as numpy array."""
         result = np.empty(len(self), np.intp)
@@ -112,8 +111,6 @@ cdef class indices:
                 arr[inc(i)] = k
         return result[:i]
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cdef void fromarray(self, Py_ssize_t [:] keys) nogil:
         for i in range(keys.shape[0]):
             self.data.insert(keys[i])
@@ -122,14 +119,16 @@ cdef class indices:
         """Update from indices, array, or iterable."""
         if isinstance(keys, indices):
             self |= keys
-        elif isinstance(keys, np.ndarray):
-            self.fromarray(keys.astype(np.intp, casting='safe', copy=False))
+        elif hasattr(keys, '__array__'):
+            self.fromarray(np.asarray(keys).astype(np.intp, casting='safe', copy=False))
         else:
             for key in keys:
                 self.data.insert(key)
 
     def __ior__(self, indices other):
         with nogil:
+            if other.data.size() >= (self.data.size() * 2):
+                self.data.reserve(other.data.size())
             for k in other.data:
                 self.data.insert(k)
         return self
@@ -219,28 +218,23 @@ cdef class vector:
             return result
         return self.get(key)
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
-    cdef assign(self, keys, double* value):
-        cdef Py_ssize_t [:] arr = np.asarray(keys).astype(np.intp, casting='safe', copy=False)
+    def __setitem__(self, key, double value):
+        if not isinstance(key, collections.Iterable):
+            self.data[key] = value
+            return
+        cdef Py_ssize_t [:] arr = np.asarray(key).astype(np.intp, casting='safe', copy=False)
         with nogil:
             for i in range(arr.shape[0]):
-                if value:
-                    self.data[arr[i]] = deref(value)
-                else:
-                    self.data.erase(arr[i])
-
-    def __setitem__(self, key, double value):
-        if isinstance(key, collections.Iterable):
-            self.assign(key, &value)
-        else:
-            self.data[key] = value
+                self.data[arr[i]] = value
 
     def __delitem__(self, key):
-        if isinstance(key, collections.Iterable):
-            self.assign(key, NULL)
-        else:
+        if not isinstance(key, collections.Iterable):
             self.data.erase(<Py_ssize_t> key)
+            return
+        cdef Py_ssize_t [:] arr = np.asarray(key).astype(np.intp, casting='safe', copy=False)
+        with nogil:
+            for i in range(arr.shape[0]):
+                self.data.erase(arr[i])
 
     def __contains__(self, Py_ssize_t key):
         return self.data.count(key)
@@ -253,7 +247,7 @@ cdef class vector:
         it = self.data.find(key)
         return deref(it).second if it != self.data.end() else 0.0
 
-    @cython.wraparound(False)
+    @cython.boundscheck(True)
     cdef apply(self, vector other):
         result = np.empty(len(self), float)
         cdef double [:] arr = result
@@ -303,7 +297,7 @@ cdef class vector:
         with nogil:
             self.data.clear()
 
-    @cython.wraparound(False)
+    @cython.boundscheck(True)
     def keys(self):
         """Return keys as numpy array."""
         result = np.empty(len(self), np.intp)
@@ -314,7 +308,7 @@ cdef class vector:
                 arr[inc(i)] = p.first
         return result[:i]
 
-    @cython.wraparound(False)
+    @cython.boundscheck(True)
     def values(self, dtype=float):
         """Return values as numpy array."""
         result = np.empty(len(self), float)
@@ -323,11 +317,9 @@ cdef class vector:
         with nogil:
             for p in self.data:
                 arr[inc(i)] = p.second
-        return result.astype(dtype, copy=False)[:i]
+        return result[:i].astype(dtype, copy=False)
     __array__ = values
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
     cdef void fromarrays(self, Py_ssize_t [:] keys, double [:] values) nogil:
         for i in range(min(keys.shape[0], values.shape[0])):
             self.data[keys[i]] += values[i]
@@ -336,9 +328,9 @@ cdef class vector:
         """Update from vector, arrays, mapping, or keys with scalar."""
         if isinstance(keys, vector):
             self += keys
-        elif isinstance(keys, np.ndarray):
-            values = np.asfarray(values if isinstance(values, np.ndarray) else np.full(len(keys), values))
-            self.fromarrays(keys.astype(np.intp, casting='safe', copy=False), values)
+        elif hasattr(keys, '__array__'):
+            values = np.asfarray(values if isinstance(values, collections.Iterable) else np.full(len(keys), values))
+            self.fromarrays(np.asarray(keys).astype(np.intp, casting='safe', copy=False), values)
         elif isinstance(keys, collections.Mapping):
             for key in keys:
                 self.data[key] += keys[key]
@@ -365,7 +357,8 @@ cdef class vector:
             self.data[p.first] = op(p.second, value)
 
     cdef void ior(self, vector other, double (*op)(double, double) nogil) nogil:
-        self.data.reserve(other.data.size())
+        if other.data.size() >= (self.data.size() * 2):
+            self.data.reserve(other.data.size())
         for p in other.data:
             self.data[p.first] = op(self.data[p.first], p.second)
 
@@ -451,7 +444,7 @@ cdef class vector:
 
     def difference(self, keys):
         """Provisional set difference; return vector without keys."""
-        ind = indices(keys)
+        ind = indices(keys.keys() if isinstance(keys, vector) else keys)
         cdef vector result = type(self)()
         with nogil:
             for p in self.data:
