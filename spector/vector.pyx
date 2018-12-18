@@ -22,6 +22,14 @@ cdef inline double fmul(double x, double y) nogil:
     return x * y
 
 
+cdef inline bool flt(double x, double y) nogil:
+    return x < y
+
+
+cdef inline bool fgt(double x, double y) nogil:
+    return x > y
+
+
 def arggroupby(Py_ssize_t [:] keys):
     """Generate unique keys with corresponding index arrays."""
     grouped = np.empty(keys.size, np.intp)
@@ -503,30 +511,35 @@ cdef class vector:
             initial = op(initial, p.second)
         return initial
 
-    def sum(self, **kwargs):
+    def sum(self, initial=0.0, dtype=float, **kwargs):
         """Return sum of values."""
-        return np.sum(self.reduce(fadd, 0.0), **kwargs)
+        return dtype(self.reduce(fadd, initial))
 
-    def min(self, **kwargs):
+    cdef argcmp(self, bool (*cmp)(double, double) nogil):
+        cdef bool empty = True
+        with nogil:
+            for p in self.data:
+                if empty or cmp(p.second, value):
+                    empty, key, value = False, p.first, p.second
+        if empty:
+            raise ValueError("min/max of an empty vector")
+        return key, value
+
+    def min(self, initial=None, **kwargs):
         """Return minimum value."""
-        return np.min(self.reduce(fmin, float('inf')) if self else (), **kwargs)
+        return self.argcmp(flt)[1] if initial is None else self.reduce(fmin, initial)
 
-    def max(self, **kwargs):
+    def max(self, initial=None, **kwargs):
         """Return maximum value."""
-        return np.max(self.reduce(fmax, float('-inf')) if self else (), **kwargs)
-
-    cdef Py_ssize_t find(self, double value) nogil:
-        for p in self.data:
-            if p.second == value:
-                return p.first
+        return self.argcmp(fgt)[1] if initial is None else self.reduce(fmax, initial)
 
     def argmin(self, **kwargs):
         """Return key with minimum value."""
-        return self.find(self.min(**kwargs))
+        return self.argcmp(flt)[0]
 
     def argmax(self, **kwargs):
         """Return key with maximum value."""
-        return self.find(self.max(**kwargs))
+        return self.argcmp(fgt)[0]
 
     def argpartition(self, kth, **kwargs):
         """Return keys partitioned by values."""
