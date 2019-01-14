@@ -67,6 +67,19 @@ vector([4 2 0], [1. 3. 1.])
 vector([0 2 4], [2. 6. 2.])
 ```
 
+Vectors support math operations with scalars, and with vectors if the set method is unambiguous. 
+vector operation | set method | ufunc
+---------------- | ---------- | -----
++ | union | add
+* | intersection | multiply
+- | | subtract
+/ | | true_divide
+** | | power
+\| | union | max
+& | intersection | min
+^ | symmetric_difference
+difference | difference
+
 ## matrix
 A mapping of keys to vectors.
 

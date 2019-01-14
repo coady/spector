@@ -1,22 +1,21 @@
 import collections
 import functools
 import numpy as np
-from .vector import arggroupby, vector
+from .vector import arggroupby as _arggroupby, vector
 try:
     from future_builtins import zip
 except ImportError:
     pass
 
 
-def groupby(keys, *columns):
-    """Generate unique keys with matching array slices, similiar to pandas' groupby."""
+def arggroupby(keys):
+    """Generate unique keys with corresponding index arrays."""
     keys = np.asarray(keys)
     order = np.argsort(keys)
-    columns = [np.asarray(values)[order] for values in columns]
     keys, counts = np.unique(keys[order], return_counts=True)
     start = 0
     for key, stop in zip(keys, counts.cumsum()):
-        yield (key,) + tuple(values[start:stop] for values in columns)
+        yield key, order[start:stop]
         start = stop
 
 
@@ -106,11 +105,12 @@ class matrix(collections.defaultdict):
     def fromcoo(cls, row, col, data):
         """Return matrix from COOrdinate format arrays."""
         row, col, data = map(np.asarray, [row, col, data])
+        grouper = _arggroupby
         try:
             row = row.astype(np.intp, casting='safe', copy=False)
         except TypeError:  # fallback to sorting
-            return cls.cast((key, vector(col, data)) for key, col, data in groupby(row, col, data))
-        return cls.cast((key, vector(col[group], data[group])) for key, group in arggroupby(row))
+            grouper = arggroupby
+        return cls.cast((key, vector(col[group], data[group])) for key, group in grouper(row))
 
     def transpose(self):
         """Return matrix with reversed dimensions."""
