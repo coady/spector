@@ -115,6 +115,7 @@ class matrix(collections.defaultdict):
     def transpose(self):
         """Return matrix with reversed dimensions."""
         return self.fromcoo(self.col, self.row, self.data)
+    T = property(transpose)
 
     def __matmul__(self, other):
         other = other.transpose()

@@ -1,5 +1,6 @@
 [![image](https://img.shields.io/pypi/v/spector.svg)](https://pypi.org/project/spector/)
 [![image](https://img.shields.io/pypi/pyversions/spector.svg)](https://python3statement.org)
+[![image](https://pepy.tech/badge/spector)](https://pepy.tech/project/spector)
 ![image](https://img.shields.io/pypi/status/spector.svg)
 [![image](https://img.shields.io/travis/coady/spector.svg)](https://travis-ci.org/coady/spector)
 [![image](https://img.shields.io/codecov/c/github/coady/spector.svg)](https://codecov.io/github/coady/spector)
@@ -67,18 +68,19 @@ vector([4 2 0], [1. 3. 1.])
 vector([0 2 4], [2. 6. 2.])
 ```
 
-Vectors support math operations with scalars, and with vectors if the set method is unambiguous. 
+Vectors support math operations with scalars, and with vectors if the set method is unambiguous.
+
 vector operation | set method | ufunc
 ---------------- | ---------- | -----
-+ | union | add
-* | intersection | multiply
-- | | subtract
-/ | | true_divide
-** | | power
-\| | union | max
-& | intersection | min
-^ | symmetric_difference
-difference | difference
+`+` | union | add
+`*` | intersection | multiply
+`-` | | subtract
+`/` | | true_divide
+`**` | | power
+`__or__` | union | max
+`&` | intersection | min
+`^` | symmetric_difference |
+`difference` | difference |
 
 ## matrix
 A mapping of keys to vectors.
