@@ -59,7 +59,8 @@ cdef class indices:
     """
     cdef unordered_set[Py_ssize_t] data
 
-    def __init__(self, keys=()):
+    def __init__(self, keys=(), length_hint=0):
+        self.data.reserve(length_hint)
         self.update(keys)
 
     def __repr__(self):
@@ -190,7 +191,8 @@ cdef class indices:
     @classmethod
     def fromdense(cls, values):
         """Return indices from a dense array representation."""
-        return cls(*np.nonzero(values))
+        keys, = np.nonzero(values)
+        return cls(keys, len(keys))
 
     def todense(self, size=None):
         """Return a dense array representation of indices."""
@@ -210,7 +212,8 @@ cdef class vector:
     """
     cdef unordered_map[Py_ssize_t, double] data
 
-    def __init__(self, keys=(), values=1.0):
+    def __init__(self, keys=(), values=1.0, length_hint=0):
+        self.data.reserve(length_hint)
         self.update(keys, values)
 
     def __repr__(self):
@@ -452,7 +455,7 @@ cdef class vector:
 
     def difference(self, keys):
         """Provisional set difference; return vector without keys."""
-        ind = indices(keys.keys() if isinstance(keys, vector) else keys)
+        ind = indices(keys.keys(), len(keys)) if isinstance(keys, vector) else indices(keys)
         cdef vector result = type(self)()
         with nogil:
             for p in self.data:
@@ -497,7 +500,7 @@ cdef class vector:
         """Return vector from a dense array representation."""
         values = np.asfarray(values)
         keys, = np.nonzero(values)
-        return cls(keys, values[keys])
+        return cls(keys, values[keys], len(keys))
 
     def todense(self, size=None, dtype=float):
         """Return a dense array representation of vector."""
