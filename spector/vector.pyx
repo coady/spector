@@ -188,6 +188,19 @@ cdef class indices:
     def __sub__(indices self, indices other):
         return self.filter(other, 0)
 
+    def dot(self, indices other):
+        """For Python 2 only; @ preferred."""
+        self, other = sorted([self, other], key=len)
+        cdef size_t total = 0
+        with nogil:
+            for k in self.data:
+                total += <size_t> other.data.count(k)
+        return total
+
+    def __matmul__(self, other):
+        """Return binary dot product, i.e., intersection count."""
+        return self.dot(other)
+
     @classmethod
     def fromdense(cls, values):
         """Return indices from a dense array representation."""
@@ -472,7 +485,7 @@ cdef class vector:
                 total += p.second * other.get(p.first)
         return total
 
-    def __matmul__(vector self, vector other):
+    def __matmul__(self, other):
         """Return vector dot product."""
         return self.dot(other)
 

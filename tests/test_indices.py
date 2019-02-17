@@ -46,6 +46,11 @@ def test_cmp():
     with pytest.raises(TypeError):
         ind <= None
     assert not ind.isdisjoint(indices([0])) and ind.isdisjoint(indices([2]))
+    assert ind.dot(indices([0])) == 1
+    try:
+        eval('ind @ indices(range(3))') == 2
+    except SyntaxError:
+        pass
 
 
 def test_sets():
