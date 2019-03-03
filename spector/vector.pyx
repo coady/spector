@@ -77,9 +77,10 @@ cdef class indices:
             yield k
 
     cdef bool all(self, indices other, size_t count) nogil:
-        for k in self.data:
-            if other.data.count(k) != count:
-                return False
+        with nogil:
+            for k in self.data:
+                if other.data.count(k) != count:
+                    return False
         return True
 
     def __eq__(self, other):
@@ -121,8 +122,9 @@ cdef class indices:
         return result[:i]
 
     cdef void fromarray(self, Py_ssize_t [:] keys) nogil:
-        for i in range(keys.shape[0]):
-            self.data.insert(keys[i])
+        with nogil:
+            for i in range(keys.shape[0]):
+                self.data.insert(keys[i])
 
     def update(self, keys):
         """Update from indices, array, or iterable."""
@@ -156,9 +158,10 @@ cdef class indices:
         return type(self)(self).__ixor__(other)
 
     cdef void ifilter(self, indices other, size_t count) nogil:
-        for k in self.data:
-            if other.data.count(k) != count:
-                self.data.erase(k)
+        with nogil:
+            for k in self.data:
+                if other.data.count(k) != count:
+                    self.data.erase(k)
 
     def __iand__(self, indices other):
         self.ifilter(other, 1)
@@ -345,8 +348,9 @@ cdef class vector:
     __array__ = values
 
     cdef void fromarrays(self, Py_ssize_t [:] keys, double [:] values) nogil:
-        for i in range(min(keys.shape[0], values.shape[0])):
-            self.data[keys[i]] += values[i]
+        with nogil:
+            for i in range(min(keys.shape[0], values.shape[0])):
+                self.data[keys[i]] += values[i]
 
     def update(self, keys, values=1.0):
         """Update from vector, arrays, mapping, or keys with scalar."""
@@ -377,14 +381,16 @@ cdef class vector:
         return type(self)(self.keys(), self.map(np.maximum, value))
 
     cdef void imap(self, double value, double (*op)(double, double) nogil) nogil:
-        for p in self.data:
-            self.data[p.first] = op(p.second, value)
+        with nogil:
+            for p in self.data:
+                self.data[p.first] = op(p.second, value)
 
     cdef void ior(self, vector other, double (*op)(double, double) nogil) nogil:
-        if other.data.size() >= (self.data.size() * 2):
-            self.data.reserve(other.data.size())
-        for p in other.data:
-            self.data[p.first] = op(self.data[p.first], p.second)
+        with nogil:
+            if other.data.size() >= (self.data.size() * 2):
+                self.data.reserve(other.data.size())
+            for p in other.data:
+                self.data[p.first] = op(self.data[p.first], p.second)
 
     def __iadd__(self, value):
         if isinstance(value, vector):
@@ -410,12 +416,13 @@ cdef class vector:
         return type(self)(self).__isub__(value)
 
     cdef void iand(self, vector other, double (*op)(double, double) nogil) nogil:
-        for p in self.data:
-            it = other.data.find(p.first)
-            if it != other.data.end():
-                self.data[p.first] = op(p.second, deref(it).second)
-            else:
-                self.data.erase(p.first)
+        with nogil:
+            for p in self.data:
+                it = other.data.find(p.first)
+                if it != other.data.end():
+                    self.data[p.first] = op(p.second, deref(it).second)
+                else:
+                    self.data.erase(p.first)
 
     def __imul__(self, value):
         if isinstance(value, vector):
@@ -523,8 +530,9 @@ cdef class vector:
         return result
 
     cdef double reduce(self, double (*op)(double, double) nogil, double initial) nogil:
-        for p in self.data:
-            initial = op(initial, p.second)
+        with nogil:
+            for p in self.data:
+                initial = op(initial, p.second)
         return initial
 
     def sum(self, initial=0.0, dtype=float, **kwargs):

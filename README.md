@@ -102,3 +102,9 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
 100% branch coverage.
 
     $ pytest [--cov]
+
+# Changes
+dev
+* Numerous optimizations
+* Intersection count
+* Increased parallelism
