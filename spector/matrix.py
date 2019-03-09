@@ -19,14 +19,22 @@ def arggroupby(keys):
         start = stop
 
 
+def groupby(keys, *arrays):
+    """Generate unique keys with associated groups."""
+    arrays = list(map(np.asarray, arrays))
+    try:
+        items = _arggroupby(np.asarray(keys).astype(np.intp, casting='safe', copy=False))
+    except TypeError:  # fallback to sorting
+        items = arggroupby(keys)
+    for key, values in items:
+        yield (key,) + tuple(arr[values] for arr in arrays)
+
+
 class matrix(collections.defaultdict):
     """A sparse vector of vectors."""
     def __init__(self, data=(), copy=True):
         super(matrix, self).__init__(vector)
-        if copy:
-            self.update(data)
-        else:
-            super(matrix, self).update(data)
+        (self if copy else super(matrix, self)).update(data)
 
     @classmethod
     def cast(cls, data):
@@ -104,13 +112,7 @@ class matrix(collections.defaultdict):
     @classmethod
     def fromcoo(cls, row, col, data):
         """Return matrix from COOrdinate format arrays."""
-        row, col, data = map(np.asarray, [row, col, data])
-        grouper = _arggroupby
-        try:
-            row = row.astype(np.intp, casting='safe', copy=False)
-        except TypeError:  # fallback to sorting
-            grouper = arggroupby
-        return cls.cast((key, vector(col[group], data[group])) for key, group in grouper(row))
+        return cls.cast((key, vector(col, data)) for key, col, data in groupby(row, col, data))
 
     def transpose(self):
         """Return matrix with reversed dimensions."""

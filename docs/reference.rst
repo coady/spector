@@ -23,3 +23,7 @@ matrix
    .. automethod:: __add__
    .. automethod:: __mul__
    .. automethod:: __matmul__
+
+groupby
+^^^^^^^^^^^
+.. autofunction:: groupby
