@@ -80,5 +80,3 @@ def test_dense():
     assert set(ind) == {0, 2}
     assert np.array_equal(ind.todense(), arr[:3])
     assert np.array_equal(ind.todense(4), arr)
-    with pytest.raises(IndexError):
-        ind.todense(2)

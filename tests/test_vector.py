@@ -75,8 +75,6 @@ def test_dense():
     assert dict(vec) == {1: 1, 2: 2, 3: 3}
     assert np.array_equal(vec.todense(), np.arange(4, dtype=float))
     assert list(vec.todense(5)) == [0, 1, 2, 3, 0]
-    with pytest.raises(IndexError):
-        vec.todense(3)
 
 
 def test_math():

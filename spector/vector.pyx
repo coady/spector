@@ -111,7 +111,7 @@ cdef class indices:
             self.data.clear()
 
     @cython.boundscheck(True)
-    def __array__(self):
+    def __array__(self, dtype=np.intp):
         """Return keys as numpy array."""
         result = np.empty(len(self), np.intp)
         cdef Py_ssize_t [:] arr = result
@@ -119,7 +119,7 @@ cdef class indices:
         with nogil:
             for k in self.data:
                 arr[inc(i)] = k
-        return result[:i]
+        return result[:i].astype(dtype, copy=False)
 
     cdef void fromarray(self, Py_ssize_t [:] keys) nogil:
         with nogil:
@@ -210,12 +210,9 @@ cdef class indices:
         keys, = np.nonzero(values)
         return cls(keys, len(keys))
 
-    def todense(self, size=None):
+    def todense(self, minlength=0, dtype=np.bool):
         """Return a dense array representation of indices."""
-        keys = np.array(self)
-        result = np.zeros(keys.max() + 1 if size is None else size, np.bool)
-        result[keys] = True
-        return result
+        return np.bincount(self, minlength=minlength).astype(dtype, copy=False)
 
 
 cdef class vector:
@@ -366,19 +363,22 @@ cdef class vector:
             for key in keys:
                 self.data[key] += values
 
+    cdef replace(self, values):
+        return type(self)(self.keys(), values, len(self))
+
     def __neg__(self):
-        return type(self)(self.keys(), np.negative(self))
+        return self.replace(np.negative(self))
 
     def __abs__(self):
-        return type(self)(self.keys(), np.absolute(self))
+        return self.replace(np.absolute(self))
 
     def minimum(self, value):
         """Return element-wise minimum vector."""
-        return type(self)(self.keys(), self.map(np.minimum, value))
+        return self.replace(self.map(np.minimum, value))
 
     def maximum(self, value):
         """Return element-wise maximum vector."""
-        return type(self)(self.keys(), self.map(np.maximum, value))
+        return self.replace(self.map(np.maximum, value))
 
     cdef void imap(self, double value, double (*op)(double, double) nogil) nogil:
         with nogil:
@@ -400,7 +400,7 @@ cdef class vector:
         return self
 
     cdef rop(self, ufunc, double value):
-        return type(self)(self.keys(), ufunc(value, self))
+        return self.replace(ufunc(value, self))
 
     def __add__(self, value):
         if not isinstance(self, vector):
@@ -522,12 +522,9 @@ cdef class vector:
         keys, = np.nonzero(values)
         return cls(keys, values[keys], len(keys))
 
-    def todense(self, size=None, dtype=float):
+    def todense(self, minlength=0, dtype=float):
         """Return a dense array representation of vector."""
-        keys = self.keys()
-        result = np.zeros(keys.max() + 1 if size is None else size, dtype)
-        result[keys] = self.values()
-        return result
+        return np.bincount(self.keys(), self, minlength).astype(dtype, copy=False)
 
     cdef double reduce(self, double (*op)(double, double) nogil, double initial) nogil:
         with nogil:
