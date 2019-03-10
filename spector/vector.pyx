@@ -126,15 +126,22 @@ cdef class indices:
             for i in range(keys.shape[0]):
                 self.data.insert(keys[i])
 
-    def update(self, keys):
-        """Update from indices, array, or iterable."""
-        if isinstance(keys, indices):
-            self |= keys
-        elif hasattr(keys, '__array__'):
-            self.fromarray(np.asarray(keys).astype(np.intp, casting='safe', copy=False))
-        else:
-            for key in keys:
-                self.data.insert(key)
+    def update(self, *others):
+        """Update from indices, arrays, or iterables."""
+        for keys in others:
+            if isinstance(keys, indices):
+                self |= keys
+            elif hasattr(keys, '__array__'):
+                self.fromarray(np.asarray(keys).astype(np.intp, casting='safe', copy=False))
+            else:
+                for key in keys:
+                    self.data.insert(key)
+
+    def union(self, *others):
+        """Return the union of sets as a new set."""
+        self = type(self)(self)
+        self.update(*others)
+        return self
 
     def __ior__(self, indices other):
         with nogil:
