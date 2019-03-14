@@ -73,7 +73,7 @@ cdef class indices:
     cdef unordered_set[Py_ssize_t] data
 
     def __init__(self, keys=(), length_hint=0):
-        self.data.reserve(length_hint)
+        self.resize(length_hint)
         self.update(keys)
 
     def __repr__(self):
@@ -134,8 +134,13 @@ cdef class indices:
                 arr[inc(i)] = k
         return result[:i].astype(dtype, copy=False)
 
-    cdef void fromarray(self, Py_ssize_t [:] keys) nogil:
+    cdef void resize(self, size_t count) nogil:
+        if count >= (self.data.bucket_count() * 2):
+            self.data.reserve(count)
+
+    cdef void fromarray(self, Py_ssize_t [:] keys, size_t length_hint=0) nogil:
         with nogil:
+            self.resize(length_hint)
             for i in range(keys.shape[0]):
                 self.data.insert(keys[i])
 
@@ -144,6 +149,8 @@ cdef class indices:
         for keys in others:
             if isinstance(keys, indices):
                 self |= keys
+            elif isinstance(keys, vector):
+                self.fromarray(keys.keys(), len(keys))
             elif hasattr(keys, '__array__'):
                 self.fromarray(asiarray(keys))
             else:
@@ -185,8 +192,7 @@ cdef class indices:
 
     def __ior__(self, indices other):
         with nogil:
-            if other.data.size() >= (self.data.size() * 2):
-                self.data.reserve(other.data.size())
+            self.resize(other.data.size())
             for k in other.data:
                 self.data.insert(k)
         return self
@@ -273,7 +279,7 @@ cdef class vector:
     cdef unordered_map[Py_ssize_t, double] data
 
     def __init__(self, keys=(), values=1.0, length_hint=0):
-        self.data.reserve(length_hint)
+        self.resize(length_hint)
         self.update(keys, values)
 
     def __repr__(self):
@@ -391,8 +397,13 @@ cdef class vector:
         return result[:i].astype(dtype, copy=False)
     __array__ = values
 
-    cdef void fromarrays(self, Py_ssize_t [:] keys, double [:] values) nogil:
+    cdef void resize(self, size_t count) nogil:
+        if count >= (self.data.bucket_count() * 2):
+            self.data.reserve(count)
+
+    cdef void fromarrays(self, Py_ssize_t [:] keys, double [:] values, size_t length_hint=0) nogil:
         with nogil:
+            self.resize(length_hint)
             for i in range(min(keys.shape[0], values.shape[0])):
                 self.data[keys[i]] += values[i]
 
@@ -402,7 +413,7 @@ cdef class vector:
             self += keys
         elif hasattr(keys, '__array__'):
             values = np.asfarray(values if isinstance(values, collections.Iterable) else np.full(len(keys), values))
-            self.fromarrays(asiarray(keys), values)
+            self.fromarrays(asiarray(keys), values, isinstance(keys, indices) and len(keys))
         elif isinstance(keys, collections.Mapping):
             for key in keys:
                 self.data[key] += keys[key]
@@ -434,8 +445,7 @@ cdef class vector:
 
     cdef void ior(self, vector other, double (*op)(double, double) nogil) nogil:
         with nogil:
-            if other.data.size() >= (self.data.size() * 2):
-                self.data.reserve(other.data.size())
+            self.resize(other.data.size())
             for p in other.data:
                 self.data[p.first] = op(self.data[p.first], p.second)
 

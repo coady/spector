@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 import pytest
-from spector import vector
+from spector import indices, vector
 from spector.vector import arggroupby
 
 
@@ -34,6 +34,7 @@ def test_basic():
     vec.update(vector([1, 2]).keys())
     assert dict(vec.items()) == {0: 0.0, 1: 2.0, 2: 1.0}
     assert vector(np.array([False]), np.array(['0']))
+    assert vector(indices([0]))
     with pytest.raises(TypeError):
         vector(np.array([0.0]))
     with pytest.raises(ValueError):

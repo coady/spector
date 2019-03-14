@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from spector import indices
+from spector import indices, vector
 
 
 def test_basic():
@@ -10,6 +10,7 @@ def test_basic():
     assert 0 not in ind
     assert list(ind) == []
     assert indices(np.array([False]))
+    assert indices(vector([0]))
     with pytest.raises(TypeError):
         indices(np.array([0.0]))
 
