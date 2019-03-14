@@ -8,10 +8,19 @@ from libcpp cimport bool
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
 cimport cython
+
+
+def length_hint(iterable):
+    try:
+        return len(iterable)
+    except TypeError:
+        return 0
+
+
 try:
     from future_builtins import zip
 except ImportError:
-    pass
+    from operator import length_hint
 
 
 cdef inline double fadd(double x, double y) nogil:
@@ -28,6 +37,10 @@ cdef inline bool flt(double x, double y) nogil:
 
 cdef inline bool fgt(double x, double y) nogil:
     return x > y
+
+
+def asiarray(keys):
+    return np.asarray(keys).astype(np.intp, casting='safe', copy=False)
 
 
 def arggroupby(Py_ssize_t [:] keys):
@@ -132,7 +145,7 @@ cdef class indices:
             if isinstance(keys, indices):
                 self |= keys
             elif hasattr(keys, '__array__'):
-                self.fromarray(np.asarray(keys).astype(np.intp, casting='safe', copy=False))
+                self.fromarray(asiarray(keys))
             else:
                 for key in keys:
                     self.data.insert(key)
@@ -142,6 +155,33 @@ cdef class indices:
         self = type(self)(self)
         self.update(*others)
         return self
+
+    cdef select(self, Py_ssize_t [:] keys, size_t count):
+        result = np.empty(keys.size, np.intp)
+        cdef Py_ssize_t [:] arr = result
+        cdef Py_ssize_t i = 0
+        with nogil:
+            for j in range(keys.shape[0]):
+                if self.data.count(keys[j]) == count:
+                    arr[inc(i)] = keys[j]
+        return result[:i]
+
+    def intersection(self, *others):
+        """Return the intersection of sets as a new set."""
+        result = np.asarray(self)
+        for other in sorted(others, key=length_hint):
+            if isinstance(other, indices):
+                result = (<indices> other).select(result, 1)
+            else:
+                result = indices(result, len(result)).select(asiarray(other), 1)
+        return type(self)(result, len(result))
+
+    def difference(self, *others):
+        """Return the difference of sets as a new set."""
+        result = np.asarray(self)
+        for other in sorted(others, key=length_hint, reverse=True):
+            result = (<indices> other if isinstance(other, indices) else indices(other)).select(result, 0)
+        return type(self)(result, len(result))
 
     def __ior__(self, indices other):
         with nogil:
@@ -253,7 +293,7 @@ cdef class vector:
         if not isinstance(key, collections.Iterable):
             self.data[key] = value
             return
-        cdef Py_ssize_t [:] arr = np.asarray(key).astype(np.intp, casting='safe', copy=False)
+        cdef Py_ssize_t [:] arr = asiarray(key)
         with nogil:
             for i in range(arr.shape[0]):
                 self.data[arr[i]] = value
@@ -262,7 +302,7 @@ cdef class vector:
         if not isinstance(key, collections.Iterable):
             self.data.erase(<Py_ssize_t> key)
             return
-        cdef Py_ssize_t [:] arr = np.asarray(key).astype(np.intp, casting='safe', copy=False)
+        cdef Py_ssize_t [:] arr = asiarray(key)
         with nogil:
             for i in range(arr.shape[0]):
                 self.data.erase(arr[i])
@@ -362,7 +402,7 @@ cdef class vector:
             self += keys
         elif hasattr(keys, '__array__'):
             values = np.asfarray(values if isinstance(values, collections.Iterable) else np.full(len(keys), values))
-            self.fromarrays(np.asarray(keys).astype(np.intp, casting='safe', copy=False), values)
+            self.fromarrays(asiarray(keys), values)
         elif isinstance(keys, collections.Mapping):
             for key in keys:
                 self.data[key] += keys[key]

@@ -61,6 +61,10 @@ def test_sets():
     assert x ^ y == indices([0, 2])
     assert x.union() == x and x.union() is not x
     assert x.union([1], [2]) == indices([0, 1, 2])
+    assert x.intersection() == x and x.intersection() is not x
+    assert x.intersection(y, [1]) == indices([1])
+    assert x.difference() == x and x.difference() is not x
+    assert x.difference(y, [3]) == indices([0])
 
     z = x
     z ^= y
