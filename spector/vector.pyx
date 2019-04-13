@@ -221,7 +221,7 @@ cdef class indices:
         return self
 
     cdef filter(self, indices other, size_t count):
-        cdef indices result = type(self)()
+        cdef indices result = type(self)(length_hint=not count and max(0, len(self) - len(other)))
         with nogil:
             for k in self.data:
                 if other.data.count(k) == count:
@@ -530,13 +530,13 @@ cdef class vector:
     def __xor__(vector self, vector other):
         return type(self)(self).__ixor__(other)
 
-    def difference(self, keys):
+    def difference(self, *others):
         """Provisional set difference; return vector without keys."""
-        ind = indices(keys.keys(), len(keys)) if isinstance(keys, vector) else indices(keys)
-        cdef vector result = type(self)()
+        cdef indices other = indices().union(*others)
+        cdef vector result = type(self)(length_hint=max(0, len(self) - len(other)))
         with nogil:
             for p in self.data:
-                if not ind.data.count(p.first):
+                if not other.data.count(p.first):
                     result.data[p.first] = p.second
         return result
 
