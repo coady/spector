@@ -11,7 +11,8 @@ install:
   - pip install cython pytest-cov codecov
 
 script:
-  - python setup.py build_ext -i
+  - cythonize -X linetrace=True spector/*.pyx
+  - python setup.py build_ext -i --define CYTHON_TRACE_NOGIL
   - pytest -v --cov
 
 after_success:

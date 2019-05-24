@@ -20,6 +20,7 @@ def length_hint(iterable):
 try:
     from future_builtins import zip
 except ImportError:
+    assert length_hint(None) == 0  # coverage
     from operator import length_hint
 
 
