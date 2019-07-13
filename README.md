@@ -7,6 +7,7 @@
 [![image](https://readthedocs.org/projects/spector/badge)](https://spector.readthedocs.io)
 [![image](https://requires.io/github/coady/spector/requirements.svg)](https://requires.io/github/coady/spector/requirements/)
 [![image](https://api.codeclimate.com/v1/badges/6ffbd68facb9ef4acfef/maintainability)](https://codeclimate.com/github/coady/spector/maintainability)
+[![image](https://img.shields.io/badge/code%20style-black-000000.svg)](https://pypi.org/project/black/)
 
 Sparse vectors optimized for memory and [NumPy](http://www.numpy.org) integrations.
 

@@ -2,6 +2,7 @@ import collections
 import functools
 import numpy as np
 from .vector import arggroupby as _arggroupby, vector
+
 try:
     from future_builtins import zip
 except ImportError:
@@ -32,6 +33,7 @@ def groupby(keys, *arrays):
 
 class matrix(collections.defaultdict):
     """A sparse vector of vectors."""
+
     def __init__(self, data=(), copy=True):
         super(matrix, self).__init__(vector)
         (self if copy else super(matrix, self)).update(data)
@@ -117,6 +119,7 @@ class matrix(collections.defaultdict):
     def transpose(self):
         """Return matrix with reversed dimensions."""
         return self.fromcoo(self.col, self.row, self.data)
+
     T = property(transpose)
 
     def __matmul__(self, other):

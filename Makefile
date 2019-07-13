@@ -5,6 +5,7 @@ all:
 
 check: all
 	python3 setup.py $@ -ms
+	black -q --check .
 	flake8
 	flake8 spector/*.pyx --ignore E999,E211,E225
 	pytest-2.7
