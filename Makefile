@@ -15,7 +15,7 @@ html: all
 	pytest --cov --cov-report $@
 	make -C docs $@
 
-dist: all
+dist:
 	python3 setup.py sdist bdist_wheel
 	docker run --rm -v $(PWD):/usr/src -w /usr/src quay.io/pypa/manylinux1_x86_64 make cp35 cp36 cp37
 

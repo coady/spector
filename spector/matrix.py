@@ -5,8 +5,9 @@ from .vector import arggroupby as _arggroupby, vector
 
 try:
     from future_builtins import zip
+    from collections import Mapping  # pragma: no cover
 except ImportError:
-    pass
+    from typing import Mapping
 
 
 def arggroupby(keys):
@@ -59,7 +60,7 @@ class matrix(collections.defaultdict):
 
     def update(self, data):
         """Update from mapping or iterable."""
-        if isinstance(data, collections.Mapping):
+        if isinstance(data, Mapping):
             for key in data:
                 self[key].update(data[key])
         else:
@@ -67,7 +68,7 @@ class matrix(collections.defaultdict):
                 self[key].update(value)
 
     def __iadd__(self, other):
-        if isinstance(other, collections.Mapping):
+        if isinstance(other, Mapping):
             for key in other:
                 self[key] += other[key]
         else:
@@ -78,7 +79,7 @@ class matrix(collections.defaultdict):
         return type(self)(self).__iadd__(other)
 
     def __imul__(self, other):
-        if isinstance(other, collections.Mapping):
+        if isinstance(other, Mapping):
             for key in set(self).difference(other):
                 del self[key]
             for key in self:
@@ -88,7 +89,7 @@ class matrix(collections.defaultdict):
         return self
 
     def __mul__(self, other):
-        if isinstance(other, collections.Mapping):
+        if isinstance(other, Mapping):
             return self.cast((key, self[key] * other[key]) for key in set(self).intersection(other))
         return self.map(vector.__mul__, other)
 

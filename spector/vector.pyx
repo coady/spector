@@ -290,26 +290,21 @@ cdef class vector:
         return self.data.size()
 
     def __getitem__(self, key):
-        if isinstance(key, collections.Iterable):
+        try:
+            return self.get(key)
+        except TypeError:
             result = type(self)(np.asarray(key), 0.0)
-            (<vector> result).iand(self, fadd)
-            return result
-        return self.get(key)
+        (<vector> result).iand(self, fadd)
+        return result
 
     def __setitem__(self, key, double value):
-        if not isinstance(key, collections.Iterable):
-            self.data[key] = value
-            return
-        cdef Py_ssize_t [:] arr = asiarray(key)
+        cdef Py_ssize_t [:] arr = np.repeat(asiarray(key), 1)
         with nogil:
             for i in range(arr.shape[0]):
                 self.data[arr[i]] = value
 
     def __delitem__(self, key):
-        if not isinstance(key, collections.Iterable):
-            self.data.erase(<Py_ssize_t> key)
-            return
-        cdef Py_ssize_t [:] arr = asiarray(key)
+        cdef Py_ssize_t [:] arr = np.repeat(asiarray(key), 1)
         with nogil:
             for i in range(arr.shape[0]):
                 self.data.erase(arr[i])
@@ -413,7 +408,8 @@ cdef class vector:
         if isinstance(keys, vector):
             self += keys
         elif hasattr(keys, '__array__'):
-            values = np.asfarray(values if isinstance(values, collections.Iterable) else np.full(len(keys), values))
+            values = np.asfarray(values)
+            values = values.repeat(values.ndim or len(keys))
             self.fromarrays(asiarray(keys), values, isinstance(keys, indices) and len(keys))
         elif isinstance(keys, collections.Mapping):
             for key in keys:
