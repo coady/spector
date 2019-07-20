@@ -14,7 +14,7 @@ ext_module = Extension(
 
 setup(
     name='spector',
-    version='0.1',
+    version='0.2',
     description='Sparse vectors.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

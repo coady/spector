@@ -105,7 +105,7 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
     $ pytest [--cov]
 
 # Changes
-dev
+0.2
 * Numerous optimizations
 * Intersection count
 * Increased parallelism
