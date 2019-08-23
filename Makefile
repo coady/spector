@@ -12,7 +12,6 @@ check: all
 	pytest --cov --cov-fail-under=100
 
 html: all
-	pytest --cov --cov-report $@
 	make -C docs $@
 
 dist:
@@ -22,8 +21,3 @@ dist:
 cp35 cp36 cp37:
 	/opt/python/$@-$@m/bin/pip wheel . -w dist
 	auditwheel repair dist/*$@m-linux_x86_64.whl
-
-clean:
-	hg st -in | xargs rm
-	rm -rf build dist spector.egg-info htmlcov wheelhouse
-	rm -f spector/*.html
