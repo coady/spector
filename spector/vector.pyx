@@ -44,6 +44,10 @@ def asiarray(keys):
     return np.asarray(keys).astype(np.intp, casting='safe', copy=False)
 
 
+cdef indices asindices(keys):
+    return keys if isinstance(keys, indices) else indices(keys, len(keys))
+
+
 def arggroupby(Py_ssize_t [:] keys):
     """Generate unique keys with corresponding index arrays."""
     grouped = np.empty(keys.size, np.intp)
@@ -176,20 +180,20 @@ cdef class indices:
 
     def intersection(self, *others):
         """Return the intersection of sets as a new set."""
-        result = np.asarray(self)
+        result = self
         for other in sorted(others, key=length_hint):
-            if isinstance(other, indices):
-                result = (<indices> other).select(result, 1)
+            if isinstance(other, indices) and len(other) >= len(result):
+                result = (<indices> other).select(asiarray(result), 1)
             else:
-                result = indices(result, len(result)).select(asiarray(other), 1)
-        return type(self)(result, len(result))
+                result = asindices(result).select(asiarray(other), 1)
+        return indices(result, len(result))
 
     def difference(self, *others):
         """Return the difference of sets as a new set."""
         result = np.asarray(self)
         for other in sorted(others, key=length_hint, reverse=True):
-            result = (<indices> other if isinstance(other, indices) else indices(other)).select(result, 0)
-        return type(self)(result, len(result))
+            result = asindices(other).select(result, 0)
+        return asindices(result)
 
     def __ior__(self, indices other):
         with nogil:

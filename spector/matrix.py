@@ -1,7 +1,7 @@
 import collections
 import functools
 import numpy as np
-from .vector import arggroupby as _arggroupby, vector
+from .vector import arggroupby as _arggroupby, asiarray, vector
 
 try:
     from future_builtins import zip
@@ -25,7 +25,7 @@ def groupby(keys, *arrays):
     """Generate unique keys with associated groups."""
     arrays = list(map(np.asarray, arrays))
     try:
-        items = _arggroupby(np.asarray(keys).astype(np.intp, casting='safe', copy=False))
+        items = _arggroupby(asiarray(keys))
     except TypeError:  # fallback to sorting
         items = arggroupby(keys)
     for key, values in items:

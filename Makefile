@@ -1,14 +1,12 @@
 all:
 	cythonize -aX linetrace=True spector/*.pyx
 	python3 setup.py build_ext -i --define CYTHON_TRACE_NOGIL
-	python2 setup.py build_ext -i
 
 check: all
 	python3 setup.py $@ -ms
 	black -q --check .
 	flake8
 	flake8 spector/*.pyx --ignore E999,E211,E225
-	pytest-2.7
 	pytest --cov --cov-fail-under=100
 
 html: all
