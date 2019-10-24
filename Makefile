@@ -14,8 +14,12 @@ html: all
 
 dist:
 	python3 setup.py sdist bdist_wheel
-	docker run --rm -v $(PWD):/usr/src -w /usr/src quay.io/pypa/manylinux1_x86_64 make cp35 cp36 cp37
+	docker run --rm -v $(PWD):/usr/src -w /usr/src quay.io/pypa/manylinux2010_x86_64 make cp35 cp36 cp37 cp38
 
 cp35 cp36 cp37:
 	/opt/python/$@-$@m/bin/pip wheel . -w dist
 	auditwheel repair dist/*$@m-linux_x86_64.whl
+
+cp38:
+	/opt/python/$@-$@/bin/pip wheel . -w dist
+	auditwheel repair dist/*$@-linux_x86_64.whl
