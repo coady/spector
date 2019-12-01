@@ -10,7 +10,7 @@ check: all
 	pytest --cov --cov-fail-under=100
 
 html: all
-	make -C docs $@
+	make -C docs $@ SPHINXOPTS=-W
 
 dist:
 	python3 setup.py sdist bdist_wheel

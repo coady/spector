@@ -26,11 +26,11 @@ def test_math():
 
     mat = matrix({'a': [0], 'b': [1]})
     other = matrix({'b': {1: 2.0}, 'c': [2]})
-    (key, vec), = (mat * other).items()
+    ((key, vec),) = (mat * other).items()
     assert key == 'b' and vec.equal(vector({1: 2.0}))
     mat *= other
     assert list(mat) == ['b'] and vec.equal(*mat.values())
-    (key, vec), = (mat * 2).items()
+    ((key, vec),) = (mat * 2).items()
     assert vec.values() == np.array([4.0])
     mat *= 2
     assert vec.equal(*mat.values())

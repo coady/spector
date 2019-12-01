@@ -1,9 +1,7 @@
 *.pyc
 .coverage
-.pytest_cache
 *.cpp
 *.so
 *.o
 docs/_build
-.ipynb_checkpoints
 *.html
