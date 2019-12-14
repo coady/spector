@@ -105,6 +105,9 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
     $ pytest [--cov]
 
 # Changes
+1.0
+* Optimized set intersection
+
 0.2
 * Numerous optimizations
 * Intersection count
