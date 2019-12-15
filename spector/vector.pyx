@@ -1,6 +1,7 @@
 # distutils: language=c++
 # cython: language_level=3, boundscheck=False, wraparound=False
 import collections
+import operator
 import numpy as np
 from cython.operator cimport dereference as deref, postincrement as inc
 from libc.math cimport fmin, fmax, pow
@@ -8,20 +9,6 @@ from libcpp cimport bool
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
 cimport cython
-
-
-def length_hint(iterable):
-    try:
-        return len(iterable)
-    except TypeError:
-        return 0
-
-
-try:
-    from future_builtins import zip
-except ImportError:
-    assert length_hint(None) == 0  # coverage
-    from operator import length_hint
 
 
 cdef inline double fadd(double x, double y) nogil:
@@ -181,7 +168,7 @@ cdef class indices:
     def intersection(self, *others):
         """Return the intersection of sets as a new set."""
         result = self
-        for other in sorted(others, key=length_hint):
+        for other in sorted(others, key=operator.length_hint):
             if isinstance(other, indices) and len(other) >= len(result):
                 result = (<indices> other).select(asiarray(result), 1)
             else:
@@ -191,7 +178,7 @@ cdef class indices:
     def difference(self, *others):
         """Return the difference of sets as a new set."""
         result = np.asarray(self)
-        for other in sorted(others, key=length_hint, reverse=True):
+        for other in sorted(others, key=operator.length_hint, reverse=True):
             result = asindices(other).select(result, 0)
         return asindices(result)
 
@@ -249,18 +236,14 @@ cdef class indices:
     def __sub__(indices self, indices other):
         return self.filter(other, 0)
 
-    def dot(self, indices other):
-        """For Python 2 only; @ preferred."""
+    def __matmul__(indices self, indices other):
+        """Return binary dot product, i.e., intersection count."""
         self, other = sorted([self, other], key=len)
         cdef size_t total = 0
         with nogil:
             for k in self.data:
                 total += <size_t> other.data.count(k)
         return total
-
-    def __matmul__(self, other):
-        """Return binary dot product, i.e., intersection count."""
-        return self.dot(other)
 
     @classmethod
     def fromdense(cls, values):
@@ -541,18 +524,14 @@ cdef class vector:
                     result.data[p.first] = p.second
         return result
 
-    def dot(self, vector other):
-        """For Python 2 only; @ preferred."""
+    def __matmul__(vector self, vector other):
+        """Return vector dot product."""
         self, other = sorted([self, other], key=len)
         cdef double total = 0.0
         with nogil:
             for p in self.data:
                 total += p.second * other.get(p.first)
         return total
-
-    def __matmul__(self, other):
-        """Return vector dot product."""
-        return self.dot(other)
 
     def __itruediv__(self, double value):
         return self.__imul__(1.0 / value)

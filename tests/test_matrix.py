@@ -40,14 +40,14 @@ def test_funcs():
     mat = matrix({'a': [0]})
     assert mat.map(np.sum, dtype=int) == {'a': 1}
     assert mat.filter(len) == mat
-    assert not mat.filter(vector.dot, vector())
+    assert not mat.filter(vector.__matmul__, vector())
     with pytest.raises(TypeError):
         mat.transpose()
     assert not matrix.fromcoo([], [], [])
     mat = matrix.fromcoo([0, 0, 1, 1], [1, 2, 1, 2], [1, 2, 3, 4])
     assert mat.map(len) == {0: 2, 1: 2}
     assert mat.transpose().map(len) == mat.T.map(len) == {1: 2, 2: 2}
-    mat = mat.__matmul__(mat.transpose())
+    mat = mat @ mat.transpose()
     assert dict(mat[0]) == {0: 5.0, 1: 11.0}
     assert dict(mat[1]) == {0: 11.0, 1: 25.0}
     mat = matrix.fromcoo(list('abcba'), range(5), [1] * 5)

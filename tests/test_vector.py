@@ -116,11 +116,7 @@ def test_math():
     other = vector([2, 3], 2.0)
     assert (vec * other).equal(vector({2: 2.0}))
     assert (other * vec).equal(vector({2: 2.0}))
-    assert vec.dot(other) == other.dot(vec) == 2.0
-    try:
-        eval('vec @ other') == 2.0
-    except SyntaxError:
-        pass
+    assert vec @ other == other @ vec == 2.0
 
 
 def test_ufunc():

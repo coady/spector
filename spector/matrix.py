@@ -1,13 +1,8 @@
 import collections
 import functools
+from typing import Mapping
 import numpy as np
 from .vector import arggroupby as _arggroupby, asiarray, vector
-
-try:
-    from future_builtins import zip
-    from collections import Mapping  # pragma: no cover
-except ImportError:
-    from typing import Mapping
 
 
 def arggroupby(keys):
@@ -125,4 +120,4 @@ class matrix(collections.defaultdict):
 
     def __matmul__(self, other):
         other = other.transpose()
-        return self.cast((key, vector(other.map(self[key].dot))) for key in self)
+        return self.cast((key, vector(other.map(self[key].__matmul__))) for key in self)
