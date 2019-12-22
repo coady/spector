@@ -7,6 +7,7 @@ check: all
 	black -q --check .
 	flake8
 	flake8 spector/*.pyx --ignore E999,E211,E225
+	mypy -p spector
 	pytest --cov --cov-fail-under=100
 
 html: all

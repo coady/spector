@@ -5,3 +5,4 @@ __pycache__/
 *.o
 docs/_build
 *.html
+.mypy_cache/
