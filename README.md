@@ -98,12 +98,16 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
 
 # Installation
 
-    $ pip install spector
+```console
+% pip install spector
+```
 
 # Tests
 100% branch coverage.
 
-    $ pytest [--cov]
+```console
+% pytest [--cov]
+```
 
 # Changes
 dev

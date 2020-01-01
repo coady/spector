@@ -21,7 +21,7 @@ import spector
 # -- Project information -----------------------------------------------------
 
 project = 'spector'
-copyright = '2019, Aric Coady'
+copyright = '2020, Aric Coady'
 author = 'Aric Coady'
 
 # The short X.Y version
