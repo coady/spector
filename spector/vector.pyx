@@ -1,7 +1,7 @@
 # distutils: language=c++
 # cython: language_level=3, boundscheck=False, wraparound=False
-import collections
 import operator
+from typing import Mapping
 import numpy as np
 from cython.operator cimport dereference as deref, postincrement as inc
 from libc.math cimport fmin, fmax, pow
@@ -398,7 +398,7 @@ cdef class vector:
             values = np.asfarray(values)
             values = values.repeat(values.ndim or len(keys))
             self.fromarrays(asiarray(keys), values, isinstance(keys, indices) and len(keys))
-        elif isinstance(keys, collections.Mapping):
+        elif isinstance(keys, Mapping):
             for key in keys:
                 self.data[key] += keys[key]
         else:
