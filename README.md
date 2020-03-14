@@ -111,7 +111,7 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
 
 # Changes
 dev
-* Python 3 required
+* Python >=3.6 required
 
 1.0
 * Optimized set intersection

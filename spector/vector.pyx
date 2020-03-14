@@ -69,7 +69,7 @@ cdef class indices:
         self.update(keys)
 
     def __repr__(self):
-        return 'indices({})'.format(np.array(self))
+        return f'indices({np.array(self)})'
 
     def __len__(self):
         return self.data.size()
@@ -271,7 +271,7 @@ cdef class vector:
         self.update(keys, values)
 
     def __repr__(self):
-        return 'vector({}, {})'.format(self.keys(), self.values())
+        return f'vector({self.keys()}, {self.values()})'
 
     def __len__(self):
         return self.data.size()

@@ -27,7 +27,7 @@ setup(
     ext_modules=cythonize([ext_module]) if cythonize else [ext_module],
     install_requires=['numpy'],
     extras_require={'docs': ['m2r', 'nbsphinx', 'jupyter', 'pandas']},
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     tests_require=['pytest-cov'],
     keywords='sparse array vector matrix numpy scipy',
     classifiers=[
@@ -38,7 +38,6 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Cython',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',

@@ -31,8 +31,8 @@ class matrix(collections.defaultdict):
     """A sparse vector of vectors."""
 
     def __init__(self, data=(), copy=True):
-        super(matrix, self).__init__(vector)
-        (self if copy else super(matrix, self)).update(data)
+        super().__init__(vector)
+        (self if copy else super()).update(data)
 
     @classmethod
     def cast(cls, data) -> 'matrix':
@@ -96,7 +96,7 @@ class matrix(collections.defaultdict):
             return self.map(np.sum)
         if axis is None:
             return sum(map(np.sum, self.values()))
-        raise np.AxisError("axis {} is out of bounds".format(axis))
+        raise np.AxisError(f"axis {axis} is out of bounds")
 
     def map(self, func: Callable, *args, **kwargs) -> dict:
         """Return matrix with function applies across vectors."""
