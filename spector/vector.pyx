@@ -35,7 +35,7 @@ cdef indices asindices(keys):
     return keys if isinstance(keys, indices) else indices(keys, len(keys))
 
 
-def arggroupby(Py_ssize_t [:] keys):
+def arggroupby(const Py_ssize_t [:] keys):
     """Generate unique keys with corresponding index arrays."""
     grouped = np.empty(keys.size, np.intp)
     cdef Py_ssize_t [:] values = grouped
@@ -130,7 +130,7 @@ cdef class indices:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
-    cdef void fromarray(self, Py_ssize_t [:] keys, size_t length_hint=0) nogil:
+    cdef void fromarray(self, const Py_ssize_t [:] keys, size_t length_hint=0) nogil:
         with nogil:
             self.resize(length_hint)
             for i in range(keys.shape[0]):
@@ -155,7 +155,7 @@ cdef class indices:
         self.update(*others)
         return self
 
-    cdef select(self, Py_ssize_t [:] keys, size_t count):
+    cdef select(self, const Py_ssize_t [:] keys, size_t count):
         result = np.empty(keys.size, np.intp)
         cdef Py_ssize_t [:] arr = result
         cdef Py_ssize_t i = 0
@@ -384,7 +384,7 @@ cdef class vector:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
-    cdef void fromarrays(self, Py_ssize_t [:] keys, double [:] values, size_t length_hint=0) nogil:
+    cdef void fromarrays(self, const Py_ssize_t [:] keys, const double [:] values, size_t length_hint=0) nogil:
         with nogil:
             self.resize(length_hint)
             for i in range(min(keys.shape[0], values.shape[0])):
