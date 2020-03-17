@@ -5,15 +5,11 @@ import numpy as np  # type: ignore
 from .vector import arggroupby as _arggroupby, asiarray, vector
 
 
-def arggroupby(keys) -> Iterator[tuple]:
+def arggroupby(values: Iterable) -> Iterator[tuple]:
     """Generate unique keys with corresponding index arrays."""
-    keys = np.asarray(keys)
-    order = np.argsort(keys)
-    keys, counts = np.unique(keys[order], return_counts=True)
-    start = 0
-    for key, stop in zip(keys, counts.cumsum()):
-        yield key, order[start:stop]
-        start = stop
+    values = np.asarray(values)
+    keys, counts = np.unique(values, return_counts=True)
+    return zip(keys, np.split(np.argsort(values), np.cumsum(counts)))
 
 
 def groupby(keys: Iterable, *arrays) -> Iterator[tuple]:
