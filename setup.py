@@ -26,7 +26,7 @@ setup(
     packages=['spector'],
     ext_modules=cythonize([ext_module]) if cythonize else [ext_module],
     install_requires=['numpy'],
-    extras_require={'docs': ['m2r', 'nbsphinx', 'jupyter', 'pandas']},
+    extras_require={'docs': ['recommonmark', 'nbsphinx', 'jupyter', 'pandas']},
     python_requires='>=3.6',
     tests_require=['pytest-cov'],
     keywords='sparse array vector matrix numpy scipy',
