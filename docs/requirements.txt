@@ -1,5 +1,4 @@
 cython
-m2r
 nbsphinx
 jupyter
 pandas

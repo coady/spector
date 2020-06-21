@@ -245,6 +245,18 @@ cdef class indices:
                 total += <size_t> other.data.count(k)
         return total
 
+    @cython.boundscheck(True)
+    def dot(self, *others):
+        """Return the intersection count of sets."""
+        others = sorted(others, key=operator.length_hint)
+        if not others:
+            return len(self)
+        if not isinstance(others[-1], indices):
+            return len(self.intersection(*others))
+        if len(others) > 1:
+            self = self.intersection(*others[:-1])
+        return self @ others[-1]
+
     @classmethod
     def fromdense(cls, values):
         """Return indices from a dense array representation."""
@@ -583,18 +595,22 @@ cdef class vector:
             raise ValueError("min/max of an empty vector")
         return key, value
 
+    @cython.boundscheck(True)
     def min(self, initial=None, **kwargs):
         """Return minimum value."""
         return self.argcmp(flt)[1] if initial is None else self.reduce(fmin, initial)
 
+    @cython.boundscheck(True)
     def max(self, initial=None, **kwargs):
         """Return maximum value."""
         return self.argcmp(fgt)[1] if initial is None else self.reduce(fmax, initial)
 
+    @cython.boundscheck(True)
     def argmin(self, **kwargs):
         """Return key with minimum value."""
         return self.argcmp(flt)[0]
 
+    @cython.boundscheck(True)
     def argmax(self, **kwargs):
         """Return key with maximum value."""
         return self.argcmp(fgt)[0]

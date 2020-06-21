@@ -63,6 +63,8 @@ def test_sets():
     assert x.intersection(y, [1]) == indices([1])
     assert x.difference() == x and x.difference() is not x
     assert x.difference(y, [3]) == indices([0])
+    assert x.dot() == 2
+    assert x.dot(list(y)) == x.dot(y) == x.dot(y, y) == 1
 
     z = x
     z ^= y
