@@ -1,4 +1,6 @@
 cython
-nbsphinx
-jupyter
+mkdocs-material
+mkdocstrings
+mkdocs-jupyter
+ipykernel
 pandas

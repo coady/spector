@@ -1,0 +1,19 @@
+site_name: spector
+site_description: Sparse vectors.
+theme: material
+
+repo_name: coady/spector
+repo_url: https://github.com/coady/spector
+edit_uri: ""
+
+nav:
+  - Introduction: index.md
+  - Reference: reference.md
+  - Examples: examples.ipynb
+  - Benchmarks: benchmarks.ipynb
+
+plugins:
+  - search
+  - mkdocstrings
+  - mkdocs-jupyter:
+      execute: True

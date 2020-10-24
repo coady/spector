@@ -13,7 +13,12 @@ def arggroupby(values: Iterable) -> Iterator[tuple]:
 
 
 def groupby(keys: Iterable, *arrays) -> Iterator[tuple]:
-    """Generate unique keys with associated groups."""
+    """Generate unique keys with associated groups.
+
+    Args:
+        keys:
+        *arrays (Iterable):
+    """
     arrays = tuple(map(np.asarray, arrays))
     try:
         items = _arggroupby(asiarray(keys))
@@ -24,7 +29,11 @@ def groupby(keys: Iterable, *arrays) -> Iterator[tuple]:
 
 
 class matrix(collections.defaultdict):
-    """A sparse vector of vectors."""
+    """A sparse vector of vectors.
+
+    Args:
+        data (Iterable):
+    """
 
     def __init__(self, data=(), copy=True):
         super().__init__(vector)

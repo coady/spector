@@ -3,6 +3,6 @@ __pycache__/
 *.cpp
 *.so
 *.o
-docs/_build
+site/
 *.html
 .mypy_cache/

@@ -2,10 +2,9 @@
 [![image](https://img.shields.io/pypi/pyversions/spector.svg)](https://python3statement.org)
 [![image](https://pepy.tech/badge/spector)](https://pepy.tech/project/spector)
 ![image](https://img.shields.io/pypi/status/spector.svg)
-[![image](https://img.shields.io/travis/coady/spector.svg)](https://travis-ci.org/coady/spector)
+[![image](https://github.com/coady/spector/workflows/build/badge.svg)](https://github.com/coady/spector/actions)
 [![image](https://img.shields.io/codecov/c/github/coady/spector.svg)](https://codecov.io/github/coady/spector)
-[![image](https://readthedocs.org/projects/spector/badge)](https://spector.readthedocs.io)
-[![image](https://requires.io/github/coady/spector/requirements.svg)](https://requires.io/github/coady/spector/requirements/)
+[![image](https://requires.io/github/coady/spector/requirements.svg?branch=main)](https://requires.io/github/coady/spector/requirements/)
 [![image](https://api.codeclimate.com/v1/badges/6ffbd68facb9ef4acfef/maintainability)](https://codeclimate.com/github/coady/spector/maintainability)
 [![image](https://img.shields.io/badge/code%20style-black-000000.svg)](https://pypi.org/project/black/)
 [![image](http://mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
@@ -30,8 +29,8 @@ All native operations are optimized and release the [GIL](https://docs.python.or
 * binary math operations
 * `map`, `filter`, and `reduce` operations with `numpy` universal functions
 
-# Usage
-## indices
+## Usage
+### indices
 A sparse boolean array with a set interface.
 
 ```python
@@ -49,7 +48,7 @@ array([ True,  True,  True])
 indices([2 1 0])
 ```
 
-## vector
+### vector
 A sparse float array with a mapping interface.
 
 ```python
@@ -84,7 +83,7 @@ vector operation | set method | ufunc
 `^` | symmetric_difference |
 `difference` | difference |
 
-## matrix
+### matrix
 A mapping of keys to vectors.
 
 ```python
@@ -96,27 +95,30 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
 (array([0]), array([1]), array([2.]))
 ```
 
-# Installation
+## Installation
 
 ```console
 % pip install spector
 ```
 
-# Tests
+## Tests
 100% branch coverage.
 
 ```console
 % pytest [--cov]
 ```
 
-# Changes
+## Changes
 dev
+
 * Python >=3.6 required
 
 1.0
+
 * Optimized set intersection
 
 0.2
+
 * Numerous optimizations
 * Intersection count
 * Increased parallelism

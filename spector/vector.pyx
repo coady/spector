@@ -60,7 +60,8 @@ cdef class indices:
 
     Provides a memory efficient set interface, with optimized conversion between numpy arrays.
 
-    :param keys: optional iterable of keys
+    Args:
+        keys (Iterable): optional iterable of keys
     """
     cdef unordered_set[Py_ssize_t] data
 
@@ -273,8 +274,9 @@ cdef class vector:
 
     Provides a memory efficient Counter interface, with optimized conversion between numpy arrays.
 
-    :param keys: optional iterable of keys
-    :param values: optional scalar or iterable of values
+    Args:
+        keys (Iterable[int]): optional iterable of keys
+        values: optional scalar or iterable of values
     """
     cdef unordered_map[Py_ssize_t, double] data
 

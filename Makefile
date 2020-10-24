@@ -10,8 +10,8 @@ check: all
 	mypy -p spector
 	pytest --cov --cov-fail-under=100
 
-html: all
-	make -C docs $@ SPHINXOPTS=-W
+docs: all
+	PYTHONPATH=$(PWD) mkdocs build
 
 dist:
 	python3 setup.py sdist bdist_wheel
