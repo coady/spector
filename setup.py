@@ -24,9 +24,10 @@ setup(
     project_urls={'Documentation': 'https://coady.github.io/spector'},
     license='Apache Software License',
     packages=['spector'],
+    package_data={'spector': ['py.typed']},
+    zip_safe=False,
     ext_modules=cythonize([ext_module]) if cythonize else [ext_module],
     install_requires=['numpy'],
-    extras_require={'docs': open('docs/requirements.txt').read().splitlines()},
     python_requires='>=3.6',
     tests_require=['pytest-cov'],
     keywords='sparse array vector matrix numpy scipy',
@@ -43,5 +44,6 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Topic :: Software Development :: Libraries :: Python Modules',
+        'Typing :: Typed',
     ],
 )
