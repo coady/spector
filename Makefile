@@ -12,7 +12,7 @@ lint:
 	flake8 spector/*.pyx --ignore E999,E211,E225
 	mypy -p spector
 
-docs: all
+html: all
 	PYTHONPATH=$(PWD) mkdocs build
 
 dist:

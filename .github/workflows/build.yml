@@ -39,4 +39,4 @@ jobs:
       with:
         python-version: 3.x
     - run: pip install -r docs/requirements.txt
-    - run: make docs
+    - run: make html

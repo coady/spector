@@ -3,8 +3,8 @@
 [![image](https://pepy.tech/badge/spector)](https://pepy.tech/project/spector)
 ![image](https://img.shields.io/pypi/status/spector.svg)
 [![image](https://github.com/coady/spector/workflows/build/badge.svg)](https://github.com/coady/spector/actions)
-[![image](https://img.shields.io/codecov/c/github/coady/spector.svg)](https://codecov.io/github/coady/spector)
-[![image](https://requires.io/github/coady/spector/requirements.svg?branch=main)](https://requires.io/github/coady/spector/requirements/)
+[![image](https://codecov.io/gh/coady/spector/branch/main/graph/badge.svg)](https://codecov.io/github/coady/spector)
+[![image](https://requires.io/github/coady/spector/requirements.svg)](https://requires.io/github/coady/spector/requirements/)
 [![image](https://api.codeclimate.com/v1/badges/6ffbd68facb9ef4acfef/maintainability)](https://codeclimate.com/github/coady/spector/maintainability)
 [![image](https://img.shields.io/badge/code%20style-black-000000.svg)](https://pypi.org/project/black/)
 [![image](http://mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
@@ -112,6 +112,8 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
 dev
 
 * Python >=3.6 required
+* Read-only views supported
+* Optimized intersection count
 
 1.0
 

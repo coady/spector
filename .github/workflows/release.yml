@@ -23,7 +23,6 @@ jobs:
         verbose: true
 
   macos:
-    needs: publish
     runs-on: macos-latest
     strategy:
       matrix:
@@ -41,7 +40,6 @@ jobs:
         verbose: true
 
   linux:
-    needs: publish
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux2014_x86_64
     steps:
