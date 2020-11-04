@@ -1,0 +1,6 @@
+cython
+mkdocs-material
+mkdocstrings
+mkdocs-jupyter
+ipykernel
+pandas
