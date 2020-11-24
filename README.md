@@ -3,9 +3,8 @@
 [![image](https://pepy.tech/badge/spector)](https://pepy.tech/project/spector)
 ![image](https://img.shields.io/pypi/status/spector.svg)
 [![image](https://github.com/coady/spector/workflows/build/badge.svg)](https://github.com/coady/spector/actions)
-[![image](https://codecov.io/gh/coady/spector/branch/main/graph/badge.svg)](https://codecov.io/github/coady/spector)
-[![image](https://requires.io/github/coady/spector/requirements.svg)](https://requires.io/github/coady/spector/requirements/)
-[![image](https://api.codeclimate.com/v1/badges/6ffbd68facb9ef4acfef/maintainability)](https://codeclimate.com/github/coady/spector/maintainability)
+[![image](https://codecov.io/gh/coady/spector/branch/main/graph/badge.svg)](https://codecov.io/gh/coady/spector/)
+ [![image](https://github.com/coady/spector/workflows/codeql/badge.svg)](https://github.com/coady/spector/security/code-scanning)
 [![image](https://img.shields.io/badge/code%20style-black-000000.svg)](https://pypi.org/project/black/)
 [![image](http://mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
