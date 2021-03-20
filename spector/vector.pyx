@@ -264,7 +264,7 @@ cdef class indices:
         keys, = np.nonzero(values)
         return cls(keys, len(keys))
 
-    def todense(self, minlength=0, dtype=np.bool):
+    def todense(self, minlength=0, dtype=np.bool_):
         """Return a dense array representation of indices."""
         return np.bincount(self, minlength=minlength).astype(dtype, copy=False)
 

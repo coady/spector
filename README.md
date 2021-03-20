@@ -16,9 +16,9 @@ What's missing from the ecosystem is sparsely populated 1-dimensional arrays, i.
 
 NumPy | Python | Spector
 ----- | ------ | -------
-1-dim bool `numpy.array` | `Set[int]` | `spector.indices`
-1-dim float `numpy.array` | `Dict[int, float]` | `spector.vector`
-`scipy.sparse.dok_matrix` | `Dict[int, Dict[int, float]]` | `spector.matrix`
+1-dim bool `numpy.array` | `set[int]` | `spector.indices`
+1-dim float `numpy.array` | `dict[int, float]` | `spector.vector`
+`scipy.sparse.dok_matrix` | `dict[int, dict[int, float]]` | `spector.matrix`
 
 Indices and vectors are implemented in [Cython](https://cython.org) as hash sets and maps.
 All native operations are optimized and release the [GIL](https://docs.python.org/3/glossary.html#term-global-interpreter-lock).
