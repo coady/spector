@@ -108,18 +108,18 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
 ```
 
 ## Changes
-1.1
+dev
+* Python >=3.7 required
 
+1.1
 * Python >=3.6 required
 * Read-only views supported
 * Optimized intersection count
 
 1.0
-
 * Optimized set intersection
 
 0.2
-
 * Numerous optimizations
 * Intersection count
 * Increased parallelism
