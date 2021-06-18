@@ -1,4 +1,5 @@
 site_name: spector
+site_url: https://coady.github.io/spector/
 site_description: Sparse vectors.
 theme: material
 
