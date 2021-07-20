@@ -10,9 +10,7 @@
 
 Sparse vectors optimized for memory and [NumPy](http://www.numpy.org) integrations.
 
-`numpy` handles densely populated n-dimemsional arrays.
-`scipy.sparse` handles sparsely populated 2-dimensional arrays, i.e., matrices.
-What's missing from the ecosystem is sparsely populated 1-dimensional arrays, i.e., vectors.
+`numpy` handles densely populated n-dimemsional arrays. `scipy.sparse` handles sparsely populated 2-dimensional arrays, i.e., matrices. What's missing from the ecosystem is sparsely populated 1-dimensional arrays, i.e., vectors.
 
 NumPy | Python | Spector
 ----- | ------ | -------
@@ -20,8 +18,8 @@ NumPy | Python | Spector
 1-dim float `numpy.array` | `dict[int, float]` | `spector.vector`
 `scipy.sparse.dok_matrix` | `dict[int, dict[int, float]]` | `spector.matrix`
 
-Indices and vectors are implemented in [Cython](https://cython.org) as hash sets and maps.
-All native operations are optimized and release the [GIL](https://docs.python.org/3/glossary.html#term-global-interpreter-lock).
+Indices and vectors are implemented in [Cython](https://cython.org) as hash sets and maps. All native operations are optimized and release the [GIL](https://docs.python.org/3/glossary.html#term-global-interpreter-lock).
+
 * conversion between sparse `numpy` arrays
 * conversion between dense `numpy` arrays
 * binary set operations
@@ -95,7 +93,6 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
 ```
 
 ## Installation
-
 ```console
 % pip install spector
 ```
@@ -109,17 +106,21 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
 
 ## Changes
 dev
+
 * Python >=3.7 required
 
 1.1
+
 * Python >=3.6 required
 * Read-only views supported
 * Optimized intersection count
 
 1.0
+
 * Optimized set intersection
 
 0.2
+
 * Numerous optimizations
 * Intersection count
 * Increased parallelism
