@@ -105,7 +105,7 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
 ```
 
 ## Changes
-dev
+1.2
 
 * Python >=3.7 required
 
