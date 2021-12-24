@@ -8,11 +8,11 @@ check: all
 lint:
 	black --check .
 	flake8
-	flake8 spector/*.pyx --ignore E999,E211,E225
+	flake8 spector/*.pyx --ignore E999
 	mypy -p spector
 
 html: all
-	PYTHONPATH=$(PWD) mkdocs build
+	PYTHONPATH=$(PWD) python3 -m mkdocs build
 
 dist:
 	python3 -m build -n
