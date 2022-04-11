@@ -6,3 +6,4 @@ __pycache__/
 site/
 *.html
 .mypy_cache/
+.venv

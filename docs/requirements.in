@@ -1,6 +1,6 @@
-cython
+cython>=0.29
 mkdocs-material
-mkdocstrings
+mkdocstrings[python]
 mkdocs-jupyter
 ipykernel
 pandas

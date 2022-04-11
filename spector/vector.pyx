@@ -3,12 +3,12 @@
 import operator
 from typing import Mapping
 import numpy as np
-from cython.operator cimport dereference as deref, postincrement as inc
+import cython
+from cython.operator import dereference, postincrement
 from libc.math cimport fmin, fmax, pow
 from libcpp cimport bool
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
-cimport cython
 
 
 cdef inline double fadd(double x, double y) nogil:
@@ -35,23 +35,22 @@ cdef indices asindices(keys):
     return keys if isinstance(keys, indices) else indices(keys, len(keys))
 
 
-def arggroupby(const Py_ssize_t [:] keys):
+def arggroupby(const Py_ssize_t[:] keys):
     """Generate unique keys with corresponding index arrays."""
-    grouped = np.empty(keys.size, np.intp)
-    cdef Py_ssize_t [:] values = grouped
-    cdef Py_ssize_t size = 0
-    cdef unordered_map[Py_ssize_t, Py_ssize_t] sizes
+    values: Py_ssize_t[:] = np.empty(keys.size, np.intp)
+    size: Py_ssize_t = 0
+    sizes: unordered_map[Py_ssize_t, Py_ssize_t]
     with nogil:
         for i in range(keys.shape[0]):
-            inc(sizes[keys[i]])
+            postincrement(sizes[keys[i]])
         for p in sizes:
             sizes[p.first] = size
             size += p.second
         for i in range(keys.shape[0]):
-            values[inc(sizes[keys[i]])] = i
+            values[postincrement(sizes[keys[i]])] = i
     start = 0
     for p in sizes:
-        yield p.first, grouped[start:p.second]
+        yield p.first, values[start:p.second]
         start = p.second
 
 
@@ -63,7 +62,7 @@ cdef class indices:
     Args:
         keys (Iterable): optional iterable of keys
     """
-    cdef unordered_set[Py_ssize_t] data
+    data: unordered_set[Py_ssize_t]
 
     def __init__(self, keys=(), length_hint=0):
         self.resize(length_hint)
@@ -75,14 +74,16 @@ cdef class indices:
     def __len__(self):
         return self.data.size()
 
-    def __contains__(self, Py_ssize_t key):
+    def __contains__(self, key: Py_ssize_t):
         return self.data.count(key)
 
     def __iter__(self):
         for k in self.data:
             yield k
 
-    cdef bool all(self, indices other, size_t count) nogil:
+    @cython.nogil
+    @cython.cfunc
+    def all(self, other: indices, count: size_t) -> bool:
         with nogil:
             for k in self.data:
                 if other.data.count(k) != count:
@@ -92,22 +93,22 @@ cdef class indices:
     def __eq__(self, other):
         return isinstance(other, indices) and len(self) == len(other) and self.all(other, 1)
 
-    def __le__(self, indices other):
+    def __le__(self, other: indices):
         return len(self) <= len(other) and self.all(other, 1)
 
-    def __lt__(self, indices other):
+    def __lt__(self, other: indices):
         return len(self) < len(other) and self.all(other, 1)
 
-    def isdisjoint(self, indices other):
+    def isdisjoint(self, other: indices):
         """Return whether two indices have a null intersection."""
         self, other = sorted([self, other], key=len)
         return self.all(other, 0)
 
-    def add(self, Py_ssize_t key):
+    def add(self, key: Py_ssize_t):
         """Add an index key."""
         return self.data.insert(key).second
 
-    def discard(self, Py_ssize_t key):
+    def discard(self, key: Py_ssize_t):
         """Remove an index key, if present."""
         return self.data.erase(key)
 
@@ -120,18 +121,20 @@ cdef class indices:
     def __array__(self, dtype=np.intp):
         """Return keys as numpy array."""
         result = np.empty(len(self), np.intp)
-        cdef Py_ssize_t [:] arr = result
-        cdef Py_ssize_t i = 0
+        arr: Py_ssize_t[:] = result
+        i: Py_ssize_t = 0
         with nogil:
             for k in self.data:
-                arr[inc(i)] = k
+                arr[postincrement(i)] = k
         return result[:i].astype(dtype, copy=False)
 
-    cdef void resize(self, size_t count) nogil:
+    @cython.nogil
+    @cython.cfunc
+    def resize(self, count: size_t) -> void:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
-    cdef void fromarray(self, const Py_ssize_t [:] keys, size_t length_hint=0) nogil:
+    cdef void fromarray(self, const Py_ssize_t[:] keys, size_t length_hint=0) nogil:
         with nogil:
             self.resize(length_hint)
             for i in range(keys.shape[0]):
@@ -156,14 +159,14 @@ cdef class indices:
         self.update(*others)
         return self
 
-    cdef select(self, const Py_ssize_t [:] keys, size_t count):
+    cdef select(self, const Py_ssize_t[:] keys, size_t count):
         result = np.empty(keys.size, np.intp)
-        cdef Py_ssize_t [:] arr = result
-        cdef Py_ssize_t i = 0
+        arr: Py_ssize_t[:]  = result
+        i: Py_ssize_t = 0
         with nogil:
             for j in range(keys.shape[0]):
                 if self.data.count(keys[j]) == count:
-                    arr[inc(i)] = keys[j]
+                    arr[postincrement(i)] = keys[j]
         return result[:i]
 
     def intersection(self, *others):
@@ -183,45 +186,48 @@ cdef class indices:
             result = asindices(other).select(result, 0)
         return asindices(result)
 
-    def __ior__(self, indices other):
+    def __ior__(self, other: indices):
         with nogil:
             self.resize(other.data.size())
             for k in other.data:
                 self.data.insert(k)
         return self
 
-    def __or__(indices self, indices other):
+    def __or__(self, other: indices):
         return type(self)(self).__ior__(other)
 
-    def __ixor__(self, indices other):
+    def __ixor__(self, other: indices):
         with nogil:
             for k in other.data:
                 if not self.data.insert(k).second:
                     self.data.erase(k)
         return self
 
-    def __xor__(indices self, indices other):
+    def __xor__(self, other: indices):
         return type(self)(self).__ixor__(other)
 
-    cdef void ifilter(self, indices other, size_t count) nogil:
+    @cython.nogil
+    @cython.cfunc
+    def ifilter(self, other: indices, count: size_t) -> void:
         with nogil:
             for k in self.data:
                 if other.data.count(k) != count:
                     self.data.erase(k)
 
-    def __iand__(self, indices other):
+    def __iand__(self, other: indices):
         self.ifilter(other, 1)
         return self
 
-    cdef filter(self, indices other, size_t count):
-        cdef indices result = type(self)(length_hint=not count and max(0, len(self) - len(other)))
+    @cython.cfunc
+    def filter(self, other: indices, count: size_t):
+        result: indices = type(self)(length_hint=not count and max(0, len(self) - len(other)))
         with nogil:
             for k in self.data:
                 if other.data.count(k) == count:
                     result.data.insert(k)
         return result
 
-    def __and__(indices self, indices other):
+    def __and__(self: indices, other: indices):
         self, other = sorted([self, other], key=len)
         return self.filter(other, 1)
 
@@ -234,13 +240,13 @@ cdef class indices:
             self.ifilter(other, 0)
         return self
 
-    def __sub__(indices self, indices other):
+    def __sub__(self: indices, other: indices):
         return self.filter(other, 0)
 
-    def __matmul__(indices self, indices other):
+    def __matmul__(self: indices, other: indices):
         """Return binary dot product, i.e., intersection count."""
         self, other = sorted([self, other], key=len)
-        cdef size_t total = 0
+        total: size_t = 0
         with nogil:
             for k in self.data:
                 total += <size_t> other.data.count(k)
@@ -278,7 +284,7 @@ cdef class vector:
         keys (Iterable[int]): optional iterable of keys
         values: optional scalar or iterable of values
     """
-    cdef unordered_map[Py_ssize_t, double] data
+    data: unordered_map[Py_ssize_t, double]
 
     def __init__(self, keys=(), values=1.0, length_hint=0):
         self.resize(length_hint)
@@ -298,37 +304,40 @@ cdef class vector:
         (<vector> result).iand(self, fadd)
         return result
 
-    def __setitem__(self, key, double value):
-        cdef Py_ssize_t [:] arr = np.repeat(asiarray(key), 1)
+    def __setitem__(self, key, value: double):
+        arr: Py_ssize_t[:] = np.repeat(asiarray(key), 1)
         with nogil:
             for i in range(arr.shape[0]):
                 self.data[arr[i]] = value
 
     def __delitem__(self, key):
-        cdef Py_ssize_t [:] arr = np.repeat(asiarray(key), 1)
+        arr: Py_ssize_t[:] = np.repeat(asiarray(key), 1)
         with nogil:
             for i in range(arr.shape[0]):
                 self.data.erase(arr[i])
 
-    def __contains__(self, Py_ssize_t key):
+    def __contains__(self, key: Py_ssize_t):
         return self.data.count(key)
 
     def __iter__(self):
         for p in self.data:
             yield p.first
 
-    cdef double get(self, Py_ssize_t key) nogil:
+    @cython.nogil
+    @cython.cfunc
+    def get(self, key: Py_ssize_t) -> double:
         it = self.data.find(key)
-        return deref(it).second if it != self.data.end() else 0.0
+        return dereference(it).second if it != self.data.end() else 0.0
 
     @cython.boundscheck(True)
-    cdef apply(self, vector other):
+    @cython.cfunc
+    def apply(self, other: vector):
         result = np.empty(len(self), float)
-        cdef double [:] arr = result
-        cdef Py_ssize_t i = 0
+        arr: double[:] = result
+        i: Py_ssize_t = 0
         with nogil:
             for p in self.data:
-                arr[inc(i)] = other.get(p.first)
+                arr[postincrement(i)] = other.get(p.first)
         return result[:i]
 
     def map(self, ufunc, *args, **kwargs):
@@ -340,7 +349,7 @@ cdef class vector:
         """Return element-wise array of keys from applying predicate across vectors."""
         return self.keys()[self.map(ufunc, *args, **kwargs)]
 
-    def equal(self, vector other):
+    def equal(self, other: vector):
         """Return whether vectors are equal as scalar bool; == is element-wise."""
         return self.data == other.data
 
@@ -375,30 +384,32 @@ cdef class vector:
     def keys(self):
         """Return keys as numpy array."""
         result = np.empty(len(self), np.intp)
-        cdef Py_ssize_t [:] arr = result
-        cdef Py_ssize_t i = 0
+        arr: Py_ssize_t[:] = result
+        i: Py_ssize_t = 0
         with nogil:
             for p in self.data:
-                arr[inc(i)] = p.first
+                arr[postincrement(i)] = p.first
         return result[:i]
 
     @cython.boundscheck(True)
     def values(self, dtype=float):
         """Return values as numpy array."""
         result = np.empty(len(self), float)
-        cdef double [:] arr = result
-        cdef Py_ssize_t i = 0
+        arr: double[:] = result
+        i: Py_ssize_t = 0
         with nogil:
             for p in self.data:
-                arr[inc(i)] = p.second
+                arr[postincrement(i)] = p.second
         return result[:i].astype(dtype, copy=False)
     __array__ = values
 
-    cdef void resize(self, size_t count) nogil:
+    @cython.nogil
+    @cython.cfunc
+    def resize(self, count: size_t) -> void:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
-    cdef void fromarrays(self, const Py_ssize_t [:] keys, const double [:] values, size_t length_hint=0) nogil:
+    cdef void fromarrays(self, const Py_ssize_t[:] keys, const double[:] values, size_t length_hint=0) nogil:
         with nogil:
             self.resize(length_hint)
             for i in range(min(keys.shape[0], values.shape[0])):
@@ -419,7 +430,8 @@ cdef class vector:
             for key in keys:
                 self.data[key] += values
 
-    cdef replace(self, values):
+    @cython.cfunc
+    def replace(self, values):
         return type(self)(self.keys(), values, len(self))
 
     def __neg__(self):
@@ -454,7 +466,8 @@ cdef class vector:
             self.imap(value, fadd)
         return self
 
-    cdef rop(self, ufunc, double value):
+    @cython.cfunc
+    def rop(self, ufunc, value: double):
         return self.replace(ufunc(value, self))
 
     def __add__(self, value):
@@ -462,7 +475,7 @@ cdef class vector:
             return (<vector> value).rop(np.add, self)
         return type(self)(self).__iadd__(value)
 
-    def __isub__(self, double value):
+    def __isub__(self, value: double):
         return self.__iadd__(-value)
 
     def __sub__(self, value):
@@ -475,7 +488,7 @@ cdef class vector:
             for p in self.data:
                 it = other.data.find(p.first)
                 if it != other.data.end():
-                    self.data[p.first] = op(p.second, deref(it).second)
+                    self.data[p.first] = op(p.second, dereference(it).second)
                 else:
                     self.data.erase(p.first)
 
@@ -487,12 +500,12 @@ cdef class vector:
         return self
 
     cdef and_(self, vector other, double (*op)(double, double) nogil):
-        cdef vector result = type(self)()
+        result: vector = type(self)()
         with nogil:
             for p in self.data:
                 it = other.data.find(p.first)
                 if it != other.data.end():
-                    result.data[p.first] = op(p.second, deref(it).second)
+                    result.data[p.first] = op(p.second, dereference(it).second)
         return result
 
     def __mul__(self, value):
@@ -503,51 +516,51 @@ cdef class vector:
         self, other = sorted([self, value], key=len)
         return (<vector> self).and_(other, fmul)
 
-    def __ior__(self, vector other):
+    def __ior__(self, other: vector):
         self.ior(other, fmax)
         return self
 
-    def __or__(vector self, vector other):
+    def __or__(self, other: vector):
         return type(self)(self).__ior__(other)
 
-    def __iand__(self, vector other):
+    def __iand__(self, other: vector):
         self.iand(other, fmin)
         return self
 
-    def __and__(vector self, vector other):
+    def __and__(self: vector, other: vector):
         self, other = sorted([self, other], key=len)
         return self.and_(other, fmin)
 
-    def __ixor__(self, vector other):
+    def __ixor__(self, other: vector):
         with nogil:
             for p in other.data:
                 if not self.data.erase(p.first):
                     self.data[p.first] = p.second
         return self
 
-    def __xor__(vector self, vector other):
+    def __xor__(self, other: vector):
         return type(self)(self).__ixor__(other)
 
     def difference(self, *others):
         """Provisional set difference; return vector without keys."""
-        cdef indices other = indices().union(*others)
-        cdef vector result = type(self)(length_hint=max(0, len(self) - len(other)))
+        other: indices = indices().union(*others)
+        result: vector = type(self)(length_hint=max(0, len(self) - len(other)))
         with nogil:
             for p in self.data:
                 if not other.data.count(p.first):
                     result.data[p.first] = p.second
         return result
 
-    def __matmul__(vector self, vector other):
+    def __matmul__(self: vector, other: vector):
         """Return vector dot product."""
         self, other = sorted([self, other], key=len)
-        cdef double total = 0.0
+        total: double = 0.0
         with nogil:
             for p in self.data:
                 total += p.second * other.get(p.first)
         return total
 
-    def __itruediv__(self, double value):
+    def __itruediv__(self, value: double):
         return self.__imul__(1.0 / value)
 
     def __truediv__(self, value):
@@ -555,7 +568,7 @@ cdef class vector:
             return (<vector> value).rop(np.true_divide, self)
         return type(self)(self).__itruediv__(value)
 
-    def __ipow__(self, double value):
+    def __ipow__(self, value: double):
         self.imap(value, pow)
         return self
 
@@ -588,7 +601,7 @@ cdef class vector:
         return dtype(self.reduce(fadd, initial))
 
     cdef argcmp(self, bool (*cmp)(double, double) nogil):
-        cdef bool empty = True
+        empty: bool = True
         with nogil:
             for p in self.data:
                 if empty or cmp(p.second, value):
