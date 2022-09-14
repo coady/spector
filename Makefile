@@ -1,5 +1,5 @@
 all:
-	cythonize -aX linetrace=True spector/*.pyx
+	python3 -m cython -a -X linetrace=True --cplus spector/*.pyx
 	python3 setup.py build_ext -i --define CYTHON_TRACE_NOGIL
 
 check: all
