@@ -5,5 +5,4 @@ __pycache__/
 *.o
 site/
 *.html
-.mypy_cache/
 .venv

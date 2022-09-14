@@ -7,7 +7,7 @@ check: all
 
 lint:
 	black --check .
-	flake8
+	flake8 --exclude .venv --ignore E501
 	flake8 spector/*.pyx --ignore E999
 	mypy -p spector
 
