@@ -1,6 +1,6 @@
 import collections
 import functools
-from typing import Callable, Iterable, Iterator, Mapping
+from typing import Callable, Iterable, Iterator, Mapping, Optional
 import numpy as np  # type: ignore
 from .vector import arggroupby as _arggroupby, asiarray, vector
 
@@ -93,7 +93,7 @@ class matrix(collections.defaultdict):
             return self.cast((key, self[key] * other[key]) for key in set(self).intersection(other))
         return self.map(vector.__mul__, other)
 
-    def sum(self, axis: int = None):
+    def sum(self, axis: Optional[int] = None):
         """Return sum of matrix elements across axis, by default both."""
         if axis in (0, -2):
             return functools.reduce(vector.__iadd__, self.values(), vector())
