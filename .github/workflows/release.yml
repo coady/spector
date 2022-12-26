@@ -31,7 +31,7 @@ jobs:
     - uses: actions/checkout@v3
     - run: pip install cython twine
     - run: python -m cython --cplus spector/*.pyx
-    - uses: pypa/cibuildwheel@v2.11.3
+    - uses: pypa/cibuildwheel@v2.11.4
       env:
         CIBW_BUILD: cp3*
     - uses: actions/setup-python@v4
