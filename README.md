@@ -105,6 +105,10 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
 ```
 
 ## Changes
+dev
+
+* Python >=3.8 required
+
 1.3
 
 * Python 3.11 wheels

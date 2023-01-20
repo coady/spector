@@ -29,12 +29,12 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
     - run: pip install cython twine
     - run: python -m cython --cplus spector/*.pyx
     - uses: pypa/cibuildwheel@v2.11.4
       env:
         CIBW_BUILD: cp3*
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.x
     - run: twine upload -u __token__ -p ${{ secrets.PYPI_TOKEN }} wheelhouse/*
