@@ -8,7 +8,7 @@ check: all
 lint:
 	black --check .
 	ruff .
-	flake8 spector/*.pyx --ignore E999
+	cython-lint spector/*.pyx --ignore E501
 	mypy -p spector
 
 html: all

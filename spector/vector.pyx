@@ -7,8 +7,8 @@ import cython
 from cython.operator import dereference, postincrement
 from libc.math cimport fmin, fmax, pow
 from libcpp cimport bool
-from libcpp.unordered_map cimport unordered_map
-from libcpp.unordered_set cimport unordered_set
+from libcpp.unordered_map cimport unordered_map  # no-cython-lint
+from libcpp.unordered_set cimport unordered_set  # no-cython-lint
 
 
 cdef inline double fadd(double x, double y) nogil:
@@ -161,7 +161,7 @@ cdef class indices:
 
     cdef select(self, const Py_ssize_t[:] keys, size_t count):
         result = np.empty(keys.size, np.intp)
-        arr: Py_ssize_t[:]  = result
+        arr: Py_ssize_t[:] = result
         i: Py_ssize_t = 0
         with nogil:
             for j in range(keys.shape[0]):
