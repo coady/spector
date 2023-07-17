@@ -34,7 +34,7 @@ jobs:
         python-version: 3.x
     - run: pip install cython twine
     - run: python -m cython --cplus spector/*.pyx
-    - uses: pypa/cibuildwheel@v2.13.1
+    - uses: pypa/cibuildwheel@v2.14.1
       env:
         CIBW_BUILD: cp3*
     - run: twine upload -u __token__ -p ${{ secrets.PYPI_TOKEN }} wheelhouse/*
