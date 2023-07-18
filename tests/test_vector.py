@@ -106,6 +106,8 @@ def test_math():
     assert ((vec + 1) / 2).equal(vector(range(3), 1.0))
     with pytest.raises(TypeError):
         pow(vec, 2, 2)
+    with pytest.raises(TypeError):
+        pow(2, vec, 2)
     assert (1 + vec).equal(vector(range(3), 2.0))
     assert (3 - vec).equal(vector(range(3), 2.0))
     assert (2 * vec).equal(vector(range(3), 2.0))

@@ -108,6 +108,7 @@ matrix(<class 'spector.vector.vector'>, {0: vector([1], [2.])})
 dev
 
 * Python >=3.8 required
+* Cython >=3 required
 
 1.3
 

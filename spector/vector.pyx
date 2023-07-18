@@ -4,11 +4,12 @@ import operator
 from typing import Mapping
 import numpy as np
 import cython
+from cython import Py_ssize_t, double, size_t, void
 from cython.operator import dereference, postincrement
 from libc.math cimport fmin, fmax, pow
 from libcpp cimport bool
-from libcpp.unordered_map cimport unordered_map  # no-cython-lint
-from libcpp.unordered_set cimport unordered_set  # no-cython-lint
+from libcpp.unordered_map cimport unordered_map
+from libcpp.unordered_set cimport unordered_set
 
 
 cdef inline double fadd(double x, double y) nogil:
@@ -252,7 +253,7 @@ cdef class indices:
                 total += <size_t> other.data.count(k)
         return total
 
-    @cython.boundscheck(True)
+    @cython.wraparound(True)
     def dot(self, *others):
         """Return the intersection count of sets."""
         others = sorted(others, key=operator.length_hint)
@@ -471,17 +472,19 @@ cdef class vector:
         return self.replace(ufunc(value, self))
 
     def __add__(self, value):
-        if not isinstance(self, vector):
-            return (<vector> value).rop(np.add, self)
         return type(self)(self).__iadd__(value)
+
+    def __radd__(self, value):
+        return self.rop(np.add, value)
 
     def __isub__(self, value: double):
         return self.__iadd__(-value)
 
     def __sub__(self, value):
-        if not isinstance(self, vector):
-            return (<vector> value).rop(np.subtract, self)
         return type(self)(self).__isub__(value)
+
+    def __rsub__(self, value):
+        return self.rop(np.subtract, value)
 
     cdef void iand(self, vector other, double (*op)(double, double) nogil) nogil:
         with nogil:
@@ -509,12 +512,13 @@ cdef class vector:
         return result
 
     def __mul__(self, value):
-        if not isinstance(self, vector):
-            return (<vector> value).rop(np.multiply, self)
         if not isinstance(value, vector):
             return type(self)(self).__imul__(value)
         self, other = sorted([self, value], key=len)
         return (<vector> self).and_(other, fmul)
+
+    def __rmul__(self, value):
+        return self.rop(np.multiply, value)
 
     def __ior__(self, other: vector):
         self.ior(other, fmax)
@@ -564,9 +568,10 @@ cdef class vector:
         return self.__imul__(1.0 / value)
 
     def __truediv__(self, value):
-        if not isinstance(self, vector):
-            return (<vector> value).rop(np.true_divide, self)
         return type(self)(self).__itruediv__(value)
+
+    def __rtruediv__(self, value):
+        return self.rop(np.true_divide, value)
 
     def __ipow__(self, value: double):
         self.imap(value, pow)
@@ -575,9 +580,12 @@ cdef class vector:
     def __pow__(self, value, modulo):
         if modulo is not None:
             raise TypeError("pow() with modulo unsupported")
-        if not isinstance(self, vector):
-            return (<vector> value).rop(np.power, self)
         return type(self)(self).__ipow__(value)
+
+    def __rpow__(self, value, modulo):
+        if modulo is not None:
+            raise TypeError("pow() with modulo unsupported")
+        return self.rop(np.power, value)
 
     @classmethod
     def fromdense(cls, values):
