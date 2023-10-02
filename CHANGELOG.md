@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 ## Changed
-* Python >=3.8 required
+* Python >=3.9 required
 * Cython >=3 required
 
 ## [1.3](https://pypi.org/project/spector/1.3/) - 2022-09-14

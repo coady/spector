@@ -6,9 +6,9 @@
 [![image](https://codecov.io/gh/coady/spector/branch/main/graph/badge.svg)](https://codecov.io/gh/coady/spector/)
  [![image](https://github.com/coady/spector/workflows/codeql/badge.svg)](https://github.com/coady/spector/security/code-scanning)
 [![image](https://img.shields.io/badge/code%20style-black-000000.svg)](https://pypi.org/project/black/)
-[![image](http://mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
+[![image](https://mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 
-Sparse vectors optimized for memory and [NumPy](http://www.numpy.org) integrations.
+Sparse vectors optimized for memory and [NumPy](https://www.numpy.org) integrations.
 
 `numpy` handles densely populated n-dimemsional arrays. `scipy.sparse` handles sparsely populated 2-dimensional arrays, i.e., matrices. What's missing from the ecosystem is sparsely populated 1-dimensional arrays, i.e., vectors.
 
