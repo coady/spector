@@ -1,0 +1,4 @@
+cython>=3
+mkdocstrings[python]
+mkdocs-jupyter
+pandas
