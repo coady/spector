@@ -1,6 +1,7 @@
 import collections
 import functools
-from typing import Callable, Iterable, Iterator, Mapping, Optional
+from collections.abc import Callable, Iterable, Iterator, Mapping
+from typing import Optional
 import numpy as np  # type: ignore
 from .vector import arggroupby as _arggroupby, asiarray, vector
 

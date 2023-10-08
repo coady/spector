@@ -1,7 +1,7 @@
 # distutils: language=c++
 # cython: language_level=3, boundscheck=False, wraparound=False
 import operator
-from typing import Mapping
+from collections.abc import Mapping
 import numpy as np
 import cython
 from cython import Py_ssize_t, double, size_t, void
@@ -12,19 +12,19 @@ from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
 
 
-cdef inline double fadd(double x, double y) nogil:
+cdef inline double fadd(double x, double y) noexcept nogil:
     return x + y
 
 
-cdef inline double fmul(double x, double y) nogil:
+cdef inline double fmul(double x, double y) noexcept nogil:
     return x * y
 
 
-cdef inline bool flt(double x, double y) nogil:
+cdef inline bool flt(double x, double y) noexcept nogil:
     return x < y
 
 
-cdef inline bool fgt(double x, double y) nogil:
+cdef inline bool fgt(double x, double y) noexcept nogil:
     return x > y
 
 
@@ -82,9 +82,7 @@ cdef class indices:
         for k in self.data:
             yield k
 
-    @cython.nogil
-    @cython.cfunc
-    def all(self, other: indices, count: size_t) -> bool:
+    cdef bool all(self, other: indices, count: size_t) noexcept nogil:
         with nogil:
             for k in self.data:
                 if other.data.count(k) != count:
@@ -129,9 +127,7 @@ cdef class indices:
                 arr[postincrement(i)] = k
         return result[:i].astype(dtype, copy=False)
 
-    @cython.nogil
-    @cython.cfunc
-    def resize(self, count: size_t) -> void:
+    cdef void resize(self, count: size_t) noexcept nogil:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
@@ -207,9 +203,7 @@ cdef class indices:
     def __xor__(self, other: indices):
         return type(self)(self).__ixor__(other)
 
-    @cython.nogil
-    @cython.cfunc
-    def ifilter(self, other: indices, count: size_t) -> void:
+    cdef void ifilter(self, other: indices, count: size_t) noexcept nogil:
         with nogil:
             for k in self.data:
                 if other.data.count(k) != count:
@@ -324,9 +318,7 @@ cdef class vector:
         for p in self.data:
             yield p.first
 
-    @cython.nogil
-    @cython.cfunc
-    def get(self, key: Py_ssize_t) -> double:
+    cdef double get(self, key: Py_ssize_t) noexcept nogil:
         it = self.data.find(key)
         return dereference(it).second if it != self.data.end() else 0.0
 
@@ -404,9 +396,7 @@ cdef class vector:
         return result[:i].astype(dtype, copy=False)
     __array__ = values
 
-    @cython.nogil
-    @cython.cfunc
-    def resize(self, count: size_t) -> void:
+    cdef void resize(self, count: size_t) noexcept nogil:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
@@ -449,12 +439,12 @@ cdef class vector:
         """Return element-wise maximum vector."""
         return self.replace(self.map(np.maximum, value))
 
-    cdef void imap(self, double value, double (*op)(double, double) nogil) nogil:
+    cdef void imap(self, double value, double (*op)(double, double) noexcept nogil) nogil:
         with nogil:
             for p in self.data:
                 self.data[p.first] = op(p.second, value)
 
-    cdef void ior(self, vector other, double (*op)(double, double) nogil) nogil:
+    cdef void ior(self, vector other, double (*op)(double, double) noexcept nogil) nogil:
         with nogil:
             self.resize(other.data.size())
             for p in other.data:
@@ -486,7 +476,7 @@ cdef class vector:
     def __rsub__(self, value):
         return self.rop(np.subtract, value)
 
-    cdef void iand(self, vector other, double (*op)(double, double) nogil) nogil:
+    cdef void iand(self, vector other, double (*op)(double, double) noexcept nogil) nogil:
         with nogil:
             for p in self.data:
                 it = other.data.find(p.first)
@@ -502,7 +492,7 @@ cdef class vector:
             self.imap(value, fmul)
         return self
 
-    cdef and_(self, vector other, double (*op)(double, double) nogil):
+    cdef and_(self, vector other, double (*op)(double, double) noexcept nogil):
         result: vector = type(self)()
         with nogil:
             for p in self.data:
@@ -598,7 +588,7 @@ cdef class vector:
         """Return a dense array representation of vector."""
         return np.bincount(self.keys(), self, minlength).astype(dtype, copy=False)
 
-    cdef double reduce(self, double (*op)(double, double) nogil, double initial) nogil:
+    cdef double reduce(self, double (*op)(double, double) noexcept nogil, double initial) nogil:
         with nogil:
             for p in self.data:
                 initial = op(initial, p.second)
@@ -608,7 +598,7 @@ cdef class vector:
         """Return sum of values."""
         return dtype(self.reduce(fadd, initial))
 
-    cdef argcmp(self, bool (*cmp)(double, double) nogil):
+    cdef argcmp(self, bool (*cmp)(double, double) noexcept nogil):
         empty: bool = True
         with nogil:
             for p in self.data:
