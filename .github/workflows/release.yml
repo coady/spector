@@ -13,14 +13,13 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: 3.x
-    - run: pip install build wheel -r docs/requirements.in
+    - run: pip install build wheel setuptools -r docs/requirements.in
     - run: python -m build -ns
     - run: make
     - run: PYTHONPATH=$PWD mkdocs gh-deploy --force
-    - uses: pypa/gh-action-pypi-publish@release/v1
+    - uses: actions/upload-artifact@v3
       with:
-        password: ${{ secrets.PYPI_TOKEN }}
-        verbose: true
+        path: dist/
 
   wheels:
     runs-on: ${{ matrix.os }}
@@ -32,9 +31,28 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: 3.x
-    - run: pip install cython twine
+    - run: pip install cython
     - run: python -m cython --cplus spector/*.pyx
+    - if: runner.os == 'Linux'
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: all
     - uses: pypa/cibuildwheel@v2.16.2
       env:
         CIBW_BUILD: cp3*
-    - run: twine upload -u __token__ -p ${{ secrets.PYPI_TOKEN }} wheelhouse/*
+        CIBW_ARCHS_LINUX: auto aarch64
+        CIBW_ARCHS_MACOS: x86_64 arm64
+    - uses: actions/upload-artifact@v3
+      with:
+        path: wheelhouse/
+
+  upload:
+    needs: [publish, wheels]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+    - uses: actions/download-artifact@v3
+    - uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: artifact/

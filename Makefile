@@ -3,11 +3,11 @@ all:
 	python setup.py build_ext -i --define CYTHON_TRACE_NOGIL
 
 check: all
-	pytest -s --cov
+	python -m pytest -s --cov
 
 lint:
-	black --check .
 	ruff .
+	ruff format --check .
 	cython-lint spector/*.pyx --ignore E501
 	mypy -p spector
 

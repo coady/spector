@@ -5,7 +5,7 @@
 [![image](https://github.com/coady/spector/workflows/build/badge.svg)](https://github.com/coady/spector/actions)
 [![image](https://codecov.io/gh/coady/spector/branch/main/graph/badge.svg)](https://codecov.io/gh/coady/spector/)
  [![image](https://github.com/coady/spector/workflows/codeql/badge.svg)](https://github.com/coady/spector/security/code-scanning)
-[![image](https://img.shields.io/badge/code%20style-black-000000.svg)](https://pypi.org/project/black/)
+[![image](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![image](https://mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 
 Sparse vectors optimized for memory and [NumPy](https://www.numpy.org) integrations.
