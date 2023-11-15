@@ -25,19 +25,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
       with:
         python-version: 3.x
-    - run: pip install cython
-    - run: python -m cython --cplus spector/*.pyx
+    - run: pip install setuptools cython
+    - run: python setup.py -V  # compiles .pyx
     - if: runner.os == 'Linux'
       uses: docker/setup-qemu-action@v3
       with:
         platforms: all
-    - uses: pypa/cibuildwheel@v2.16.2
+    - uses: pypa/cibuildwheel@v2.16
       env:
         CIBW_BUILD: cp3*
         CIBW_ARCHS_LINUX: auto aarch64
