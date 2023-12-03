@@ -26,7 +26,7 @@ def groupby(keys: Iterable, *arrays) -> Iterator[tuple]:
     except TypeError:  # fallback to sorting
         items = arggroupby(keys)
     for key, values in items:
-        yield (key,) + tuple(arr[values] for arr in arrays)
+        yield key, *(arr[values] for arr in arrays)
 
 
 class matrix(collections.defaultdict):
@@ -107,7 +107,9 @@ class matrix(collections.defaultdict):
     def map(self, func: Callable, *args, **kwargs) -> dict:
         """Return matrix with function applies across vectors."""
         result = {key: func(self[key], *args, **kwargs) for key in self}
-        return self.cast(result) if all(isinstance(value, vector) for value in result.values()) else result
+        if all(isinstance(value, vector) for value in result.values()):
+            return self.cast(result)
+        return result
 
     def filter(self, func: Callable, *args, **kwargs) -> 'matrix':
         """Return matrix with function applies across vectors."""

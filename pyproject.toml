@@ -43,7 +43,7 @@ version = {attr = "spector.__version__"}
 spector = ["py.typed", "vector.pyx"]
 
 [tool.ruff]
-line-length = 120
+line-length = 100
 extend-include = ["*.ipynb"]
 
 [tool.ruff.format]

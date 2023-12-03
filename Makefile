@@ -1,6 +1,8 @@
-all:
-	python -m cython -a -X linetrace=True --cplus spector/*.pyx
+all: spector/*.cpp
 	python setup.py build_ext -i --define CYTHON_TRACE_NOGIL
+
+spector/*.cpp: spector/*.pyx
+	python -m cython -aX linetrace=True --cplus $?
 
 check: all
 	python -m pytest -s --cov

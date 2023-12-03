@@ -175,6 +175,7 @@ def test_arg():
     with pytest.raises(ValueError):
         np.argmax(vector())
     arr = np.array([10, 20, 30, 20, 10])
-    assert {key: list(values) for key, values in arggroupby(arr)} == {10: [0, 4], 20: [1, 3], 30: [2]}
+    data = {key: list(values) for key, values in arggroupby(arr)}
+    assert data == {10: [0, 4], 20: [1, 3], 30: [2]}
     (arr,) = np.nonzero(vector({1: 0.0, 2: 1.0}))
     assert list(arr) == [2]

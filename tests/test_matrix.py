@@ -9,7 +9,8 @@ def test_basic():
     assert np.array_equal(np.sort(mat.col), np.array([0, 1]))
     assert np.array_equal(mat.data, np.array([1.0, 1.0]))
     mat.update([('b', [1]), ('c', [2])])
-    assert dict(zip(zip(mat.row, mat.col), mat.data)) == {('a', 0): 1.0, ('b', 1): 2.0, ('c', 2): 1.0}
+    data = dict(zip(zip(mat.row, mat.col), mat.data))
+    assert data == {('a', 0): 1.0, ('b', 1): 2.0, ('c', 2): 1.0}
 
 
 def test_math():
