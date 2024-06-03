@@ -13,9 +13,9 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: 3.x
-    - run: pip install build wheel -r docs/requirements.in
+    - run: pip install build -r docs/requirements.in
     - run: cythonize spector/*.pyx
-    - run: python -m build -ns
+    - run: python -m build -s
     - run: make
     - run: PYTHONPATH=$PWD mkdocs gh-deploy --force
     - uses: actions/upload-artifact@v4
