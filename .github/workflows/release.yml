@@ -32,7 +32,7 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: 3.x
-    - run: pip install setuptools cython
+    - run: pip install -r requirements-build.in
     - run: cythonize spector/*.pyx
     - if: runner.os == 'Linux'
       uses: docker/setup-qemu-action@v3

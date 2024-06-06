@@ -33,6 +33,9 @@ Documentation = "https://coady.github.io/spector"
 Changelog = "https://github.com/coady/spector/blob/main/CHANGELOG.md"
 Issues = "https://github.com/coady/spector/issues"
 
+[tool.setuptools]
+packages = ["spector"]
+
 [tool.setuptools.package-data]
 spector = ["*.pyx"]
 

@@ -411,7 +411,7 @@ cdef class vector:
         if isinstance(keys, vector):
             self += keys
         elif hasattr(keys, '__array__'):
-            values = np.asfarray(values)
+            values = np.asarray(values, np.double)
             values = values.repeat(values.ndim or len(keys))
             self.fromarrays(asiarray(keys), values, isinstance(keys, indices) and len(keys))
         elif isinstance(keys, Mapping):
@@ -580,7 +580,7 @@ cdef class vector:
     @classmethod
     def fromdense(cls, values):
         """Return vector from a dense array representation."""
-        values = np.asfarray(values)
+        values = np.asarray(values, np.double)
         keys, = np.nonzero(values)
         return cls(keys, values[keys], len(keys))
 

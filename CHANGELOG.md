@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+### Changed
+* Numpy >=2 supported
+
 ## [1.4](https://pypi.org/project/spector/1.4/) - 2023-10-05
 ### Changed
 * Python >=3.9 required

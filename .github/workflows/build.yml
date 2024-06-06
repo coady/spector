@@ -13,11 +13,13 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
+        numpy-version: ['<2', '']
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+    - run: pip install --pre 'numpy${{ matrix.numpy-version }}'
     - run: pip install -r tests/requirements.in
     - run: make check
     - run: coverage xml

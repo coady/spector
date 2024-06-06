@@ -102,7 +102,7 @@ class matrix(collections.defaultdict):
             return self.map(np.sum)
         if axis is None:
             return sum(map(np.sum, self.values()))
-        raise np.AxisError(axis, ndim=2)
+        raise np.exceptions.AxisError(axis, ndim=2)
 
     def map(self, func: Callable, *args, **kwargs) -> dict:
         """Return matrix with function applies across vectors."""
