@@ -2,9 +2,9 @@
 [![image](https://img.shields.io/pypi/pyversions/spector.svg)](https://python3statement.org)
 [![image](https://pepy.tech/badge/spector)](https://pepy.tech/project/spector)
 ![image](https://img.shields.io/pypi/status/spector.svg)
-[![image](https://github.com/coady/spector/workflows/build/badge.svg)](https://github.com/coady/spector/actions)
+[![build](https://github.com/coady/spector/actions/workflows/build.yml/badge.svg)](https://github.com/coady/spector/actions/workflows/build.yml)
 [![image](https://codecov.io/gh/coady/spector/branch/main/graph/badge.svg)](https://codecov.io/gh/coady/spector/)
- [![image](https://github.com/coady/spector/workflows/codeql/badge.svg)](https://github.com/coady/spector/security/code-scanning)
+[![CodeQL](https://github.com/coady/spector/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/coady/spector/actions/workflows/github-code-scanning/codeql)
 [![image](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![image](https://mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 
