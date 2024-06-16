@@ -5,6 +5,7 @@
 [![build](https://github.com/coady/spector/actions/workflows/build.yml/badge.svg)](https://github.com/coady/spector/actions/workflows/build.yml)
 [![image](https://codecov.io/gh/coady/spector/branch/main/graph/badge.svg)](https://codecov.io/gh/coady/spector/)
 [![CodeQL](https://github.com/coady/spector/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/coady/spector/actions/workflows/github-code-scanning/codeql)
+[![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/coady/spector)
 [![image](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![image](https://mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 

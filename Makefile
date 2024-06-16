@@ -5,6 +5,11 @@ all: spector/*.pyx
 check: all
 	python -m pytest -s --cov
 
+bench: spector/*.pyx
+	cythonize $?
+	python setup.py build_ext -i
+	python -m pytest --codspeed
+
 lint:
 	ruff check .
 	ruff format --check .

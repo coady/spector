@@ -1,3 +1,4 @@
 -r ../requirements-build.in
 numpy
 pytest-cov
+pytest-codspeed
