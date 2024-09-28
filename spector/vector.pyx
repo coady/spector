@@ -117,7 +117,7 @@ cdef class indices:
             self.data.clear()
 
     @cython.boundscheck(True)
-    def __array__(self, dtype=np.intp):
+    def __array__(self, dtype=np.intp, copy=None):
         """Return keys as numpy array."""
         result = np.empty(len(self), np.intp)
         arr: Py_ssize_t[:] = result
@@ -394,7 +394,9 @@ cdef class vector:
             for p in self.data:
                 arr[postincrement(i)] = p.second
         return result[:i].astype(dtype, copy=False)
-    __array__ = values
+
+    def __array__(self, dtype=float, copy=None):
+        return self.values(dtype)
 
     cdef void resize(self, count: size_t) noexcept nogil:
         if count >= (self.data.bucket_count() * 2):

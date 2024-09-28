@@ -25,7 +25,7 @@ def test_basic():
     assert not ind.discard(0)
     ind.update(range(3))
     assert set(ind) == set(indices(np.array(ind))) == {0, 1, 2}
-    np.array(ind).sum() == 3
+    assert np.array(ind).sum() == 3
     ind.update(indices([3]))
     assert 3 in ind
     ind.clear()
