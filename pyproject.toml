@@ -8,14 +8,13 @@ version = "1.5"
 description = "Sparse vectors."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {file = "LICENSE.txt"}
+license = { text = "Apache-2.0" }
 authors = [{name = "Aric Coady", email = "aric.coady@gmail.com"}]
 keywords = ["sparse", "array", "vector", "matrix", "numpy", "scipy"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
