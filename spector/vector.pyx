@@ -203,16 +203,6 @@ cdef class indices:
     def __xor__(self, other: indices):
         return type(self)(self).__ixor__(other)
 
-    cdef void ifilter(self, other: indices, count: size_t) noexcept nogil:
-        with nogil:
-            for k in self.data:
-                if other.data.count(k) != count:
-                    self.data.erase(k)
-
-    def __iand__(self, other: indices):
-        self.ifilter(other, 1)
-        return self
-
     @cython.cfunc
     def filter(self, other: indices, count: size_t):
         result: indices = type(self)(length_hint=not count and max(0, len(self) - len(other)))
@@ -227,12 +217,11 @@ cdef class indices:
         return self.filter(other, 1)
 
     def __isub__(self, indices other):
-        if len(other) < len(self):
-            with nogil:
-                for k in other.data:
-                    self.data.erase(k)
-        else:
-            self.ifilter(other, 0)
+        if len(self) < len(other):
+            return self - other
+        with nogil:
+            for k in other.data:
+                self.data.erase(k)
         return self
 
     def __sub__(self: indices, other: indices):
@@ -295,8 +284,11 @@ cdef class vector:
         try:
             return self.get(key)
         except TypeError:
-            result = type(self)(np.asarray(key), 0.0)
-        (<vector> result).iand(self, fadd)
+            keys: Py_ssize_t[:] = asiarray(key)
+        result: vector = type(self)(length_hint=len(keys))
+        with nogil:
+            for i in range(keys.shape[0]):
+                result.data[keys[i]] = self.get(keys[i])
         return result
 
     def __setitem__(self, key, value: double):
@@ -478,20 +470,10 @@ cdef class vector:
     def __rsub__(self, value):
         return self.rop(np.subtract, value)
 
-    cdef void iand(self, vector other, double (*op)(double, double) noexcept nogil) nogil:
-        with nogil:
-            for p in self.data:
-                it = other.data.find(p.first)
-                if it != other.data.end():
-                    self.data[p.first] = op(p.second, dereference(it).second)
-                else:
-                    self.data.erase(p.first)
-
     def __imul__(self, value):
         if isinstance(value, vector):
-            self.iand(value, fmul)
-        else:
-            self.imap(value, fmul)
+            return self * value
+        self.imap(value, fmul)
         return self
 
     cdef and_(self, vector other, double (*op)(double, double) noexcept nogil):
@@ -518,10 +500,6 @@ cdef class vector:
 
     def __or__(self, other: vector):
         return type(self)(self).__ior__(other)
-
-    def __iand__(self, other: vector):
-        self.iand(other, fmin)
-        return self
 
     def __and__(self: vector, other: vector):
         self, other = sorted([self, other], key=len)

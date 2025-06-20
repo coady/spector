@@ -59,7 +59,7 @@ def test_cmp():
 
     assert vec[vec <= 1.0].equal(vector({0: 0.0, 1: 1.0}))
     assert vec[vec >= 1.0].equal(vector({1: 1.0, 2: 2.0}))
-    assert len(vec[(2, 3)]) == 1
+    assert vec[(2, 3)].equal(vector({2: 2.0, 3: 0.0}))
     vec[vec <= 1.0] = 1.0
     assert vec[0] == 1.0
     vec[(2, 3)] = 3.0
