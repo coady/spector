@@ -8,7 +8,7 @@ version = "1.6"
 description = "Sparse vectors."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [{name = "Aric Coady", email = "aric.coady@gmail.com"}]
 keywords = ["sparse", "array", "vector", "matrix", "numpy", "scipy"]
 classifiers = [
@@ -52,3 +52,17 @@ ignore_missing_imports = true
 source = ["spector"]
 branch = true
 plugins = ["Cython.Coverage"]
+
+[dependency-groups]
+dev = [
+    "cython>=3",
+    "setuptools",
+    "pytest-cov",
+    "pytest-codspeed",
+    "cython-lint",
+    "ruff",
+    "mypy",
+    "mkdocstrings[python]",
+    "mkdocs-jupyter",
+    "pandas",
+]

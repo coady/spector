@@ -5,3 +5,4 @@ __pycache__/
 *.o
 site/
 *.html
+uv.lock

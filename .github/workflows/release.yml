@@ -2,22 +2,17 @@ name: release
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: 3.x
-    - run: pip install build -r docs/requirements.in
-    - run: cythonize spector/*.pyx
-    - run: python -m build -s
+    - uses: astral-sh/setup-uv@v6
     - run: make
-    - run: PYTHONPATH=$PWD mkdocs gh-deploy --force
+    - run: uv build --sdist
+    - run: uv run --with spector mkdocs gh-deploy --force
     - uses: actions/upload-artifact@v4
       with:
         name: artifact-sdist
@@ -30,11 +25,8 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: 3.x
-    - run: pip install -r requirements-build.in
-    - run: cythonize spector/*.pyx
+    - uses: astral-sh/setup-uv@v6
+    - run: make
     - if: runner.os == 'Linux'
       uses: docker/setup-qemu-action@v3
       with:

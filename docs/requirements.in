@@ -1,4 +1,0 @@
--r ../requirements-build.in
-mkdocstrings[python]
-mkdocs-jupyter
-pandas
