@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import pytest
 from spector import indices, vector
 
 size = 10**5
@@ -9,15 +10,21 @@ def keys():
     return np.array([random.randint(0, size * 2) for _ in range(size)])
 
 
-def test_indices(benchmark):
-    inds = benchmark(indices, keys()), indices(keys())
-    benchmark(indices.__matmul__, *inds)
-    benchmark(indices.__and__, *inds)
-    benchmark(indices.__or__, *inds)
+keys1 = pytest.fixture(keys)
+keys2 = pytest.fixture(keys)
 
 
-def test_vector(benchmark):
-    vecs = benchmark(vector, keys()), vector(keys())
-    benchmark(vector.__matmul__, *vecs)
-    benchmark(vector.__mul__, *vecs)
-    benchmark(vector.__add__, *vecs)
+@pytest.mark.benchmark
+def test_indices(keys1, keys2):
+    i, j = indices(keys1), indices(keys2)
+    i @ j
+    i & j
+    i | j
+
+
+@pytest.mark.benchmark
+def test_vector(keys1, keys2):
+    v, w = vector(keys1), vector(keys2)
+    v @ w
+    v * w
+    v + w
