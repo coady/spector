@@ -20,4 +20,4 @@ lint: all
 
 html: all
 	uv run python setup.py build_ext -i
-	uv run --with spector mkdocs build
+	uv run mkdocs build
