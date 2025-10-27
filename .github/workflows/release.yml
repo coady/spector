@@ -2,11 +2,14 @@ name: release
 
 on:
   push:
+    branches: [rel]
     tags: ['v*']
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v5
     - uses: astral-sh/setup-uv@v7
