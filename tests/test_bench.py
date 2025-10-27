@@ -1,7 +1,8 @@
+import collections
 import random
 import numpy as np
 import pytest
-from spector import indices, vector
+from spector import groupby, indices, vector
 
 size = 10**5
 
@@ -28,3 +29,13 @@ def test_vector(keys1, keys2):
     v @ w
     v * w
     v + w
+
+
+@pytest.mark.benchmark
+def test_group_hashed(keys1):
+    collections.deque(groupby(keys1), maxlen=0)
+
+
+@pytest.mark.benchmark
+def test_group_sorted(keys1):
+    collections.deque(groupby(keys1.astype('u8')), maxlen=0)
