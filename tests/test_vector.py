@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
-from spector import indices, vector
 from spector.vector import arggroupby
+
+from spector import indices, vector
 
 
 def test_basic():

@@ -1,7 +1,9 @@
 import collections
 import random
+
 import numpy as np
 import pytest
+
 from spector import groupby, indices, vector
 
 size = 10**5

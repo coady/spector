@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
+* Python 3.14 wheels
 
 ## [1.6](https://pypi.org/project/spector/1.6/) - 2025-06-20
 ### Changed

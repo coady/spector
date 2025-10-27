@@ -1,8 +1,11 @@
 import collections
 import functools
 from collections.abc import Callable, Iterable, Iterator, Mapping
+
 import numpy as np  # type: ignore
-from .vector import arggroupby as _arggroupby, asiarray, vector
+
+from .vector import arggroupby as _arggroupby
+from .vector import asiarray, vector
 
 
 def arggroupby(values: Iterable) -> Iterator[tuple]:
