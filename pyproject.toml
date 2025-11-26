@@ -46,7 +46,7 @@ line-length = 100
 select = ["I"]
 
 [tool.ruff.format]
-quote-style = "single"
+quote-style = "preserve"
 
 [[tool.mypy.overrides]]
 module = "spector.vector"

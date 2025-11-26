@@ -13,8 +13,8 @@ bench: all
 	uv run pytest --codspeed
 
 lint: all
-	uv run ruff check .
-	uv run ruff format --check .
+	uv run ruff check
+	uv run ruff format --check
 	uv run cython-lint spector/*.pyx --ignore E501
 	uv run mypy -p spector
 
