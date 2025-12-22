@@ -13,11 +13,11 @@ bench: all
 	uv run pytest --codspeed
 
 lint: all
-	uv run ruff check
-	uv run ruff format --check
+	uvx ruff check
+	uvx ruff format --check
 	uv run cython-lint spector/*.pyx --ignore E501
-	uv run mypy -p spector
+	uvx ty check spector
 
 html: all
 	uv run python setup.py build_ext -i
-	uv run mkdocs build
+	uv run --group docs mkdocs build

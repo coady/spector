@@ -1,11 +1,13 @@
 name: release
 
-on:
-  push:
-    tags: ['v*']
+permissions:
+  id-token: write
+  pages: write
+
+on: [workflow_dispatch]
 
 jobs:
-  publish:
+  sdist:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -14,7 +16,6 @@ jobs:
     - uses: astral-sh/setup-uv@v7
     - run: make
     - run: uv build --sdist
-    - run: uv run mkdocs gh-deploy --force
     - uses: actions/upload-artifact@v6
       with:
         name: artifact-sdist
@@ -43,11 +44,9 @@ jobs:
         name: artifact-${{ matrix.os }}
         path: wheelhouse/
 
-  upload:
-    needs: [publish, wheels]
+  publish:
+    needs: [sdist, wheels]
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
     steps:
     - uses: actions/download-artifact@v7
       with:
@@ -55,3 +54,14 @@ jobs:
         pattern: artifact-*
         merge-multiple: true
     - uses: pypa/gh-action-pypi-publish@release/v1
+
+  pages:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - uses: astral-sh/setup-uv@v7
+    - run: make html
+    - uses: actions/upload-pages-artifact@v4
+      with:
+        path: site/
+    - uses: actions/deploy-pages@v4

@@ -2,7 +2,7 @@ import collections
 import functools
 from collections.abc import Callable, Iterable, Iterator, Mapping
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from .vector import arggroupby as _arggroupby
 from .vector import asiarray, vector
@@ -61,7 +61,7 @@ class matrix(collections.defaultdict):
         """COO format data array of the matrix"""
         return np.concatenate([vec.values() for vec in self.values()])
 
-    def update(self, data):
+    def update(self, data):  # type: ignore
         """Update from mapping or iterable."""
         if isinstance(data, Mapping):
             for key in data:

@@ -48,9 +48,9 @@ select = ["I"]
 [tool.ruff.format]
 quote-style = "preserve"
 
-[[tool.mypy.overrides]]
-module = "spector.vector"
-ignore_missing_imports = true
+[tool.ty.rules]
+unused-ignore-comment = "error"
+unresolved-import = "ignore"
 
 [tool.coverage.run]
 source = ["spector"]
@@ -58,15 +58,5 @@ branch = true
 plugins = ["Cython.Coverage"]
 
 [dependency-groups]
-dev = [
-    "cython>=3",
-    "setuptools",
-    "pytest-cov",
-    "pytest-codspeed",
-    "cython-lint",
-    "ruff",
-    "mypy",
-    "mkdocstrings[python]",
-    "mkdocs-jupyter",
-    "pandas",
-]
+dev = ["cython>=3", "setuptools", "pytest-cov", "pytest-codspeed", "cython-lint"]
+docs = ["mkdocstrings[python]", "mkdocs-jupyter"]
