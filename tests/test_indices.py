@@ -6,7 +6,7 @@ from spector import indices, vector
 
 def test_basic():
     ind = indices()
-    assert str(ind) == 'indices([])'
+    assert str(ind) == "indices([])"
     assert len(ind) == 0
     assert 0 not in ind
     assert list(ind) == []
@@ -17,7 +17,7 @@ def test_basic():
 
     assert ind.add(0)
     assert not ind.add(0)
-    assert str(ind) == 'indices([0])'
+    assert str(ind) == "indices([0])"
     assert len(ind) == 1
     assert 0 in ind
     assert list(ind) == [0]

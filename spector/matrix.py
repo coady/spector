@@ -130,6 +130,6 @@ class matrix(collections.defaultdict):
 
     T = property(transpose)
 
-    def __matmul__(self, other: 'matrix') -> Self:
+    def __matmul__(self, other) -> Self:
         other = other.transpose()
         return self.cast((key, vector(other.map(self[key].__matmul__))) for key in self)

@@ -40,4 +40,4 @@ def test_group_hashed(keys1):
 
 @pytest.mark.benchmark
 def test_group_sorted(keys1):
-    collections.deque(groupby(keys1.astype('u8')), maxlen=0)
+    collections.deque(groupby(keys1.astype("u8")), maxlen=0)

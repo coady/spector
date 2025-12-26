@@ -6,13 +6,13 @@ from spector import indices, vector
 
 
 def test_basic():
-    assert str(vector()) == 'vector([], [])'
+    assert str(vector()) == "vector([], [])"
     vec = vector(range(3))
     assert len(vec) == 3
     assert np.array_equal(vec.keys(), np.array([2, 1, 0]))
     assert np.array_equal(vec.values(), np.array([1, 1, 1]))
-    assert np.array(vec).dtype == 'float64'
-    assert np.array(vec, dtype=int).dtype == 'int64'
+    assert np.array(vec).dtype == "float64"
+    assert np.array(vec, dtype=int).dtype == "int64"
     assert vec[0] == 1.0
     vec[0] += 1.5
     assert vec[0] == 2.5
@@ -33,12 +33,12 @@ def test_basic():
     assert set(vec.values()) == {0.0, 1.0, 0.0}
     vec.update(vector([1, 2]).keys())
     assert dict(vec.items()) == {0: 0.0, 1: 2.0, 2: 1.0}
-    assert vector(np.array([False]), np.array(['0']))
+    assert vector(np.array([False]), np.array(["0"]))
     assert vector(indices([0]))
     with pytest.raises(TypeError):
         vector(np.array([0.0]))
     with pytest.raises(ValueError):
-        vector(np.array([0]), np.array([' ']))
+        vector(np.array([0]), np.array([" "]))
 
 
 def test_cmp():
