@@ -1,6 +1,7 @@
 import collections
 import functools
 from collections.abc import Callable, Iterable, Iterator, Mapping
+from typing import Self
 
 import numpy as np
 
@@ -43,7 +44,7 @@ class matrix(collections.defaultdict):
         (self if copy else super()).update(data)
 
     @classmethod
-    def cast(cls, data) -> 'matrix':
+    def cast(cls, data) -> Self:
         return cls(data, copy=False)
 
     @property
@@ -78,7 +79,7 @@ class matrix(collections.defaultdict):
             self.map(vector.__iadd__, other)
         return self
 
-    def __add__(self, other) -> 'matrix':
+    def __add__(self, other) -> Self:
         return type(self)(self).__iadd__(other)
 
     def __imul__(self, other):
@@ -98,12 +99,13 @@ class matrix(collections.defaultdict):
 
     def sum(self, axis: int | None = None):
         """Return sum of matrix elements across axis, by default both."""
-        if axis in (0, -2):
-            return functools.reduce(vector.__iadd__, self.values(), vector())
-        if axis in (1, -1):
-            return self.map(np.sum)
-        if axis is None:
-            return sum(map(np.sum, self.values()))
+        match axis:
+            case 0 | -2:
+                return functools.reduce(vector.__iadd__, self.values(), vector())
+            case 1 | -1:
+                return self.map(np.sum)
+            case None:
+                return sum(map(np.sum, self.values()))
         raise np.exceptions.AxisError(axis, ndim=2)
 
     def map(self, func: Callable, *args, **kwargs) -> dict:
@@ -113,21 +115,21 @@ class matrix(collections.defaultdict):
             return self.cast(result)
         return result
 
-    def filter(self, func: Callable, *args, **kwargs) -> 'matrix':
+    def filter(self, func: Callable, *args, **kwargs) -> Self:
         """Return matrix with function applies across vectors."""
         return self.cast((key, vec) for key, vec in self.items() if func(vec, *args, **kwargs))
 
     @classmethod
-    def fromcoo(cls, row: Iterable, col: Iterable[int], data: Iterable[float]) -> 'matrix':
+    def fromcoo(cls, row: Iterable, col: Iterable[int], data: Iterable[float]) -> Self:
         """Return matrix from COOrdinate format arrays."""
         return cls.cast((key, vector(col, data)) for key, col, data in groupby(row, col, data))
 
-    def transpose(self) -> 'matrix':
+    def transpose(self) -> Self:
         """Return matrix with reversed dimensions."""
         return self.fromcoo(self.col, self.row, self.data)
 
     T = property(transpose)
 
-    def __matmul__(self, other: 'matrix') -> 'matrix':
+    def __matmul__(self, other: 'matrix') -> Self:
         other = other.transpose()
         return self.cast((key, vector(other.map(self[key].__matmul__))) for key in self)
