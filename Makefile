@@ -5,7 +5,7 @@ all: spector/*.pyx
 check: spector/*.pyx
 	uv sync --no-install-project
 	uv run --no-project cythonize -aX linetrace=True $?
-	uv run python setup.py build_ext -i --define CYTHON_TRACE_NOGIL
+	uv run python setup.py build_ext -i --define CYTHON_TRACE_NOGIL --undef Py_LIMITED_API
 	uv run pytest -s --cov
 
 bench: all

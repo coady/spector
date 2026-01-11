@@ -45,7 +45,6 @@ line-length = 100
 select = ["I"]
 
 [tool.ty.rules]
-unused-ignore-comment = "error"
 unresolved-import = "ignore"
 
 [tool.coverage.run]
@@ -54,5 +53,5 @@ branch = true
 plugins = ["Cython.Coverage"]
 
 [dependency-groups]
-dev = ["cython>=3", "setuptools", "pytest-cov", "pytest-codspeed", "cython-lint"]
+dev = ["cython>=3.2", "setuptools", "pytest-cov", "pytest-codspeed", "cython-lint"]
 docs = ["mkdocstrings[python]", "mkdocs-jupyter"]

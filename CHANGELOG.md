@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## Unreleased
 ### Changed
 * Python >=3.11 required
+* Stable ABI builds
 
 ## [1.6.1](https://pypi.org/project/spector/1.6.1/) - 2025-10-27
 ### Added

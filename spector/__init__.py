@@ -1,2 +1,2 @@
-from .vector import indices, vector  # noqa
-from .matrix import groupby, matrix  # noqa
+from .matrix import groupby, matrix
+from .vector import indices, vector
