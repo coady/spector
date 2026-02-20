@@ -32,9 +32,6 @@ Documentation = "https://coady.github.io/spector"
 Changelog = "https://github.com/coady/spector/blob/main/CHANGELOG.md"
 Issues = "https://github.com/coady/spector/issues"
 
-[tool.setuptools]
-packages = ["spector"]
-
 [tool.setuptools.package-data]
 spector = ["*.pyx"]
 
@@ -42,7 +39,10 @@ spector = ["*.pyx"]
 line-length = 100
 
 [tool.ruff.lint]
-select = ["I"]
+extend-select = ["I"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
 
 [tool.ty.rules]
 unresolved-import = "ignore"

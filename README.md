@@ -1,5 +1,5 @@
 [![image](https://img.shields.io/pypi/v/spector.svg)](https://pypi.org/project/spector/)
-[![image](https://img.shields.io/pypi/pyversions/spector.svg)](https://python3statement.org)
+![image](https://img.shields.io/pypi/pyversions/spector.svg)
 [![image](https://pepy.tech/badge/spector)](https://pepy.tech/project/spector)
 ![image](https://img.shields.io/pypi/status/spector.svg)
 [![build](https://github.com/coady/spector/actions/workflows/build.yml/badge.svg)](https://github.com/coady/spector/actions/workflows/build.yml)
