@@ -31,10 +31,10 @@ jobs:
     - uses: astral-sh/setup-uv@v7
     - run: make
     - if: runner.os == 'Linux'
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v4
       with:
         platforms: all
-    - uses: pypa/cibuildwheel@v3.3
+    - uses: pypa/cibuildwheel@v3.4
       env:
         CIBW_BUILD: cp311-*
         CIBW_ARCHS_LINUX: auto aarch64
