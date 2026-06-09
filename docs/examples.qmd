@@ -1,0 +1,74 @@
+---
+title: "Examples"
+---
+
+## indices
+```{python}
+import numpy as np
+
+from spector import indices
+
+ind = indices([0, 2])
+ind
+```
+
+```{python}
+np.array(ind)
+```
+
+```{python}
+1 in ind
+```
+
+```{python}
+ind.add(1)
+```
+
+```{python}
+ind.todense()
+```
+
+```{python}
+indices.fromdense([True, False, True])
+```
+
+## vector
+```{python}
+from spector import vector
+
+vec = vector({0: 1.0, 2: 2.0, 4: 1.0})
+vec
+```
+
+```{python}
+np.array(vec)
+```
+
+```{python}
+vec[2] += 1.0
+vec[2]
+```
+
+```{python}
+vec.sum()
+```
+
+```{python}
+vec.todense()
+```
+
+```{python}
+vector.fromdense([1, 0, 2, 0, 1])
+```
+
+## matrix
+```{python}
+from spector import matrix
+
+mat = matrix({0: {1: 2.0}})
+mat
+```
+
+```{python}
+mat.row, mat.col, mat.data
+```

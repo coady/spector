@@ -9,7 +9,7 @@ description = "Sparse vectors."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
-authors = [{name = "Aric Coady", email = "aric.coady@gmail.com"}]
+authors = [{name = "A. Coady"}]
 keywords = ["sparse", "array", "vector", "matrix", "numpy", "scipy"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -54,4 +54,4 @@ plugins = ["Cython.Coverage"]
 
 [dependency-groups]
 dev = ["cython>=3.2", "setuptools", "pytest-cov", "pytest-codspeed", "cython-lint"]
-docs = ["mkdocstrings[python]", "mkdocs-jupyter"]
+docs = ["great-docs"]

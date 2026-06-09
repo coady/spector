@@ -1,0 +1,16 @@
+user_guide: docs
+parser: google
+
+authors:
+- name: A. Coady
+  github: coady
+
+reference:
+- title: Classes
+  contents:
+  - name: indices
+  - name: vector
+  - name: matrix
+- title: Functions
+  contents:
+  - groupby

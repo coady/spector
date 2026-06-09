@@ -20,4 +20,4 @@ lint: all
 
 html: all
 	uv run python setup.py build_ext -i
-	uv run --group docs mkdocs build
+	uv run --group docs great-docs build
