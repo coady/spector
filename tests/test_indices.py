@@ -58,6 +58,7 @@ def test_sets():
     assert x & y == indices([1])
     assert x - y == indices([0])
     assert x ^ y == indices([0, 2])
+    assert (indices() ^ x) == x
     assert x.union() == x and x.union() is not x
     assert x.union([1], [2]) == indices([0, 1, 2])
     assert x.intersection() == x and x.intersection() is not x

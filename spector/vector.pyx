@@ -185,9 +185,12 @@ cdef class indices:
 
     def __ior__(self, other: indices):
         with nogil:
-            self.resize(other.data.size())
-            for k in other.data:
-                self.data.insert(k)
+            if self.data.empty():
+                self.data = other.data
+            else:
+                self.resize(other.data.size())
+                for k in other.data:
+                    self.data.insert(k)
         return self
 
     def __or__(self, other: indices):
@@ -195,9 +198,14 @@ cdef class indices:
 
     def __ixor__(self, other: indices):
         with nogil:
-            for k in other.data:
-                if not self.data.insert(k).second:
-                    self.data.erase(k)
+            if self.data.empty():
+                self.data = other.data
+            else:
+                self.resize(other.data.size())
+                for k in other.data:
+                    pair = self.data.insert(k)
+                    if not pair.second:
+                        self.data.erase(pair.first)
         return self
 
     def __xor__(self, other: indices):
@@ -440,9 +448,15 @@ cdef class vector:
 
     cdef void ior(self, vector other, double (*op)(double, double) noexcept nogil) nogil:
         with nogil:
-            self.resize(other.data.size())
-            for p in other.data:
-                self.data[p.first] = op(self.data[p.first], p.second)
+            if self.data.empty():
+                self.data = other.data
+            else:
+                self.resize(other.data.size())
+                for p in other.data:
+                    pair = self.data.insert(p)
+                    if not pair.second:
+                        it = pair.first
+                        dereference(it).second = op(dereference(it).second, p.second)
 
     def __iadd__(self, value):
         if isinstance(value, vector):
@@ -507,9 +521,14 @@ cdef class vector:
 
     def __ixor__(self, other: vector):
         with nogil:
-            for p in other.data:
-                if not self.data.erase(p.first):
-                    self.data[p.first] = p.second
+            if self.data.empty():
+                self.data = other.data
+            else:
+                self.resize(other.data.size())
+                for p in other.data:
+                    pair = self.data.insert(p)
+                    if not pair.second:
+                        self.data.erase(pair.first)
         return self
 
     def __xor__(self, other: vector):
