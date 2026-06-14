@@ -130,29 +130,34 @@ cdef class indices:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
-    cdef void fromarray(self, const Py_ssize_t[:] keys, size_t length_hint=0) nogil:
+    cdef void fromarray(self, const Py_ssize_t[:] keys) nogil:
         with nogil:
-            self.resize(length_hint)
             for i in range(keys.shape[0]):
                 self.data.insert(keys[i])
 
-    def update(self, *others):
-        """Update from indices, arrays, or iterables."""
-        for keys in others:
-            if isinstance(keys, indices):
-                self |= keys
-            elif isinstance(keys, vector):
-                self.fromarray(keys.keys(), len(keys))
-            elif hasattr(keys, "__array__"):
-                self.fromarray(asiarray(keys))
-            else:
-                for key in keys:
-                    self.data.insert(key)
+    cdef void fromvector(self, vector vec) nogil:
+        with nogil:
+            self.resize(vec.data.size())
+            for p in vec.data:
+                self.data.insert(p.first)
+
+    def update(self, other):
+        """Update from indices, vector, array, or iterable."""
+        if isinstance(other, indices):
+            self |= other
+        elif isinstance(other, vector):
+            self.fromvector(other)
+        elif hasattr(other, "__array__"):
+            self.fromarray(asiarray(other))
+        else:
+            for key in other:
+                self.data.insert(key)
 
     def union(self, *others):
         """Return the union of sets as a new set."""
         self = type(self)(self)
-        self.update(*others)
+        for other in others:
+            self.update(other)
         return self
 
     cdef select(self, const Py_ssize_t[:] keys, size_t count):
@@ -417,20 +422,26 @@ cdef class vector:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
-    cdef void fromarrays(self, const Py_ssize_t[:] keys, const double[:] values, size_t length_hint=0) nogil:
+    cdef void fromarrays(self, const Py_ssize_t[:] keys, const double[:] values) nogil:
         with nogil:
-            self.resize(length_hint)
             for i in range(min(keys.shape[0], values.shape[0])):
                 self.data[keys[i]] += values[i]
+
+    cdef void fromindices(self, indices ind, double value) nogil:
+        with nogil:
+            self.resize(ind.data.size())
+            for p in ind.data:
+                self.data[p] += value
 
     def update(self, keys, values=1.0):
         """Update from vector, arrays, mapping, or keys with scalar."""
         if isinstance(keys, vector):
             self += keys
+        elif isinstance(keys, indices):
+            self.fromindices(keys, values)
         elif hasattr(keys, "__array__"):
             values = np.asarray(values, np.double)
-            values = values.repeat(values.ndim or len(keys))
-            self.fromarrays(asiarray(keys), values, isinstance(keys, indices) and len(keys))
+            self.fromarrays(asiarray(keys), values.repeat(values.ndim or len(keys)))
         elif isinstance(keys, Mapping):
             for key in keys:
                 self.data[key] += keys[key]
