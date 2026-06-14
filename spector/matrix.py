@@ -60,7 +60,7 @@ class matrix(collections.defaultdict):
     @property
     def data(self) -> np.ndarray:
         """COO format data array of the matrix"""
-        return np.concatenate([vec.values() for vec in self.values()])
+        return np.concatenate(list(map(np.array, self.values())))
 
     def update(self, data):  # type: ignore
         """Update from mapping or iterable."""
@@ -124,9 +124,15 @@ class matrix(collections.defaultdict):
         """Return matrix from COOrdinate format arrays."""
         return cls.cast((key, vector(col, data)) for key, col, data in groupby(row, col, data))
 
+    def tocoo(self) -> tuple:
+        """Return `row`, `col`, and `data` arrays in a single pass."""
+        arrays = [(np.full(len(vec), key), *vec.toarrays()) for key, vec in self.items()]
+        return tuple(map(np.concatenate, zip(*arrays)))
+
     def transpose(self) -> Self:
         """Return matrix with reversed dimensions."""
-        return self.fromcoo(self.col, self.row, self.data)
+        row, col, data = self.tocoo()
+        return self.fromcoo(col, row, data)
 
     T = property(transpose)
 

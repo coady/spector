@@ -29,7 +29,7 @@ cdef inline bool fgt(double x, double y) noexcept nogil:
 
 
 def asiarray(keys):
-    return np.asarray(keys).astype(np.intp, casting='safe', copy=False)
+    return np.asarray(keys).astype(np.intp, casting="safe", copy=False)
 
 
 cdef indices asindices(keys):
@@ -70,7 +70,7 @@ cdef class indices:
         self.update(keys)
 
     def __repr__(self):
-        return f'indices({np.array(self)})'
+        return f"indices({np.array(self)})"
 
     def __len__(self):
         return self.data.size()
@@ -79,8 +79,7 @@ cdef class indices:
         return self.data.count(key)
 
     def __iter__(self):
-        for k in self.data:
-            yield k
+        return iter(self.data)
 
     cdef bool all(self, other: indices, count: size_t) noexcept nogil:
         with nogil:
@@ -144,7 +143,7 @@ cdef class indices:
                 self |= keys
             elif isinstance(keys, vector):
                 self.fromarray(keys.keys(), len(keys))
-            elif hasattr(keys, '__array__'):
+            elif hasattr(keys, "__array__"):
                 self.fromarray(asiarray(keys))
             else:
                 for key in keys:
@@ -283,7 +282,8 @@ cdef class vector:
         self.update(keys, values)
 
     def __repr__(self):
-        return f'vector({self.keys()}, {self.values()})'
+        keys, values = self.toarrays()
+        return f"vector({keys}, {values})"
 
     def __len__(self):
         return self.data.size()
@@ -365,13 +365,28 @@ cdef class vector:
         return self.filter(np.greater_equal, value)
 
     def items(self):
-        """Return zipped keys and values."""
-        return zip(self.keys(), self.values())
+        """Generate key and value pairs."""
+        for p in self.data:
+            yield p.first, p.second
 
     def clear(self):
         """Remove all items."""
         with nogil:
             self.data.clear()
+
+    @cython.boundscheck(True)
+    def toarrays(self):
+        """Return keys and values as numpy arrays."""
+        keys = np.empty(len(self), np.intp)
+        values = np.empty(len(self), float)
+        k: Py_ssize_t[:] = keys
+        v: double[:] = values
+        i: Py_ssize_t = 0
+        with nogil:
+            for p in self.data:
+                k[i] = p.first
+                v[postincrement(i)] = p.second
+        return keys[:i], values[:i]
 
     @cython.boundscheck(True)
     def keys(self):
@@ -385,7 +400,7 @@ cdef class vector:
         return result[:i]
 
     @cython.boundscheck(True)
-    def values(self, dtype=float):
+    def values(self):
         """Return values as numpy array."""
         result = np.empty(len(self), float)
         arr: double[:] = result
@@ -393,10 +408,10 @@ cdef class vector:
         with nogil:
             for p in self.data:
                 arr[postincrement(i)] = p.second
-        return result[:i].astype(dtype, copy=False)
+        return result[:i]
 
     def __array__(self, dtype=float, copy=None):
-        return self.values(dtype)
+        return self.values().astype(dtype, copy=False)
 
     cdef void resize(self, count: size_t) noexcept nogil:
         if count >= (self.data.bucket_count() * 2):
@@ -412,7 +427,7 @@ cdef class vector:
         """Update from vector, arrays, mapping, or keys with scalar."""
         if isinstance(keys, vector):
             self += keys
-        elif hasattr(keys, '__array__'):
+        elif hasattr(keys, "__array__"):
             values = np.asarray(values, np.double)
             values = values.repeat(values.ndim or len(keys))
             self.fromarrays(asiarray(keys), values, isinstance(keys, indices) and len(keys))
