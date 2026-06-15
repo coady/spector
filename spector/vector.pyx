@@ -1,7 +1,9 @@
 # distutils: language=c++
 # cython: language_level=3, boundscheck=False, wraparound=False
 import operator
+import warnings
 from collections.abc import Mapping
+
 import numpy as np
 import cython
 from cython import Py_ssize_t, double, size_t, void
@@ -341,11 +343,13 @@ cdef class vector:
     def map(self, ufunc, *args, **kwargs):
         """Return element-wise array of values from applying function across vectors."""
         args = [self.apply(arg) if isinstance(arg, vector) else arg for arg in args]
-        return ufunc(self.values(), *args, **kwargs)
+        return ufunc(np.array(self), *args, **kwargs)
 
     def filter(self, ufunc, *args, **kwargs):
         """Return element-wise array of keys from applying predicate across vectors."""
-        return self.keys()[self.map(ufunc, *args, **kwargs)]
+        keys, values = self.toarrays()
+        args = [self.apply(arg) if isinstance(arg, vector) else arg for arg in args]
+        return keys[ufunc(values, *args, **kwargs)]
 
     def equal(self, other: vector):
         """Return whether vectors are equal as scalar bool; == is element-wise."""
@@ -395,7 +399,8 @@ cdef class vector:
 
     @cython.boundscheck(True)
     def keys(self):
-        """Return keys as numpy array."""
+        """Deprecated: use `toarrays` or iteration instead."""
+        warnings.warn("use `toarrays` or iteration instead", DeprecationWarning)
         result = np.empty(len(self), np.intp)
         arr: Py_ssize_t[:] = result
         i: Py_ssize_t = 0
@@ -404,8 +409,13 @@ cdef class vector:
                 arr[postincrement(i)] = p.first
         return result[:i]
 
-    @cython.boundscheck(True)
     def values(self):
+        """Deprecated: use `np.array` instead."""
+        warnings.warn("use `np.array` instead", DeprecationWarning)
+        return np.array(self)
+
+    @cython.boundscheck(True)
+    def __array__(self, dtype=float, copy=None):
         """Return values as numpy array."""
         result = np.empty(len(self), float)
         arr: double[:] = result
@@ -413,10 +423,7 @@ cdef class vector:
         with nogil:
             for p in self.data:
                 arr[postincrement(i)] = p.second
-        return result[:i]
-
-    def __array__(self, dtype=float, copy=None):
-        return self.values().astype(dtype, copy=False)
+        return result[:i].astype(dtype, copy=False)
 
     cdef void resize(self, count: size_t) noexcept nogil:
         if count >= (self.data.bucket_count() * 2):
@@ -450,22 +457,26 @@ cdef class vector:
                 self.data[key] += values
 
     @cython.cfunc
-    def replace(self, values):
-        return type(self)(self.keys(), values, len(self))
+    def replace(self, ufunc, value):
+        keys, values = self.toarrays()
+        value = self.apply(value) if isinstance(value, vector) else value
+        return type(self)(keys, ufunc(values, value), len(self))
 
     def __neg__(self):
-        return self.replace(np.negative(self))
+        keys, values = self.toarrays()
+        return type(self)(keys, -values, len(self))
 
     def __abs__(self):
-        return self.replace(np.absolute(self))
+        keys, values = self.toarrays()
+        return type(self)(keys, abs(values), len(self))
 
     def minimum(self, value):
         """Return element-wise minimum vector."""
-        return self.replace(self.map(np.minimum, value))
+        return self.replace(np.minimum, value)
 
     def maximum(self, value):
         """Return element-wise maximum vector."""
-        return self.replace(self.map(np.maximum, value))
+        return self.replace(np.maximum, value)
 
     cdef void imap(self, double value, double (*op)(double, double) noexcept nogil) nogil:
         with nogil:
@@ -493,7 +504,8 @@ cdef class vector:
 
     @cython.cfunc
     def rop(self, ufunc, value: double):
-        return self.replace(ufunc(value, self))
+        keys, values = self.toarrays()
+        return type(self)(keys, ufunc(value, values), len(self))
 
     def __add__(self, value):
         return type(self)(self).__iadd__(value)
@@ -611,7 +623,8 @@ cdef class vector:
 
     def todense(self, minlength=0, dtype=float):
         """Return a dense array representation of vector."""
-        return np.bincount(self.keys(), self, minlength).astype(dtype, copy=False)
+        keys, values = self.toarrays()
+        return np.bincount(keys, values, minlength).astype(dtype, copy=False)
 
     cdef double reduce(self, double (*op)(double, double) noexcept nogil, double initial) nogil:
         with nogil:

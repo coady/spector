@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 * `toarrays` method
 
+### Deprecated
+* `keys` replaced with `toarrays` or iteration
+* `values` replaced with `np.array`
+
 ## [1.6.1](https://pypi.org/project/spector/1.6.1/) - 2025-10-27
 ### Added
 * Python 3.14 wheels

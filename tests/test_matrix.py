@@ -33,7 +33,7 @@ def test_math():
     mat *= other
     assert list(mat) == ["b"] and vec.equal(*mat.values())
     ((key, vec),) = (mat * 2).items()
-    assert vec.values() == np.array([4.0])
+    assert np.array_equal(vec, [4.0])
     mat *= 2
     assert vec.equal(*mat.values())
 
@@ -50,7 +50,7 @@ def test_funcs():
     assert mat.map(len) == {0: 2, 1: 2}
     assert mat.transpose().map(len) == mat.T.map(len) == {1: 2, 2: 2}
     mat = mat @ mat.transpose()
-    assert dict(mat[0]) == {0: 5.0, 1: 11.0}
-    assert dict(mat[1]) == {0: 11.0, 1: 25.0}
+    assert dict(mat[0].items()) == {0: 5.0, 1: 11.0}
+    assert dict(mat[1].items()) == {0: 11.0, 1: 25.0}
     mat = matrix.fromcoo(list("abcba"), range(5), [1] * 5)
     assert mat.map(len) == {"a": 2, "b": 2, "c": 1}

@@ -55,7 +55,7 @@ class matrix(collections.defaultdict):
     @property
     def col(self) -> np.ndarray:
         """COO format column index array of the matrix"""
-        return np.concatenate([vec.keys() for vec in self.values()])
+        return np.concatenate([vec.toarrays()[0] for vec in self.values()])
 
     @property
     def data(self) -> np.ndarray:
