@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 * Python >=3.11 required
 * Stable ABI builds
 * Copy, conversion, and `xor` optimized
+* `map` and `filter` return keys and values
 
 ### Added
 * `toarrays` method

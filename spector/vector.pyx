@@ -2,7 +2,7 @@
 # cython: language_level=3, boundscheck=False, wraparound=False
 import operator
 import warnings
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 
 import numpy as np
 import cython
@@ -99,16 +99,16 @@ cdef class indices:
     def __lt__(self, other: indices):
         return len(self) < len(other) and self.all(other, 1)
 
-    def isdisjoint(self, other: indices):
+    def isdisjoint(self, other: indices) -> bool:
         """Return whether two indices have a null intersection."""
         self, other = sorted([self, other], key=len)
         return self.all(other, 0)
 
-    def add(self, key: Py_ssize_t):
+    def add(self, key: Py_ssize_t) -> bool:
         """Add an index key."""
         return self.data.insert(key).second
 
-    def discard(self, key: Py_ssize_t):
+    def discard(self, key: Py_ssize_t) -> size_t:
         """Remove an index key, if present."""
         return self.data.erase(key)
 
@@ -155,7 +155,7 @@ cdef class indices:
             for key in other:
                 self.data.insert(key)
 
-    def union(self, *others):
+    def union(self, *others) -> Self:
         """Return the union of sets as a new set."""
         self = type(self)(self)
         for other in others:
@@ -172,7 +172,7 @@ cdef class indices:
                     arr[postincrement(i)] = keys[j]
         return result[:i]
 
-    def intersection(self, *others):
+    def intersection(self, *others) -> Self:
         """Return the intersection of sets as a new set."""
         result = self
         for other in sorted(others, key=operator.length_hint):
@@ -180,9 +180,9 @@ cdef class indices:
                 result = (<indices> other).select(asiarray(result), 1)
             else:
                 result = asindices(result).select(asiarray(other), 1)
-        return indices(result, len(result))
+        return type(self)(result, len(result))
 
-    def difference(self, *others):
+    def difference(self, *others) -> indices:
         """Return the difference of sets as a new set."""
         result = np.asarray(self)
         for other in sorted(others, key=operator.length_hint, reverse=True):
@@ -251,7 +251,7 @@ cdef class indices:
         return total
 
     @cython.wraparound(True)
-    def dot(self, *others):
+    def dot(self, *others) -> size_t:
         """Return the intersection count of sets."""
         others = sorted(others, key=operator.length_hint)
         if not others:
@@ -263,12 +263,12 @@ cdef class indices:
         return self @ others[-1]
 
     @classmethod
-    def fromdense(cls, values):
+    def fromdense(cls, values) -> Self:
         """Return indices from a dense array representation."""
         keys, = np.nonzero(values)
         return cls(keys, len(keys))
 
-    def todense(self, minlength=0, dtype=np.bool_):
+    def todense(self, minlength=0, dtype=np.bool_) -> np.ndarray:
         """Return a dense array representation of indices."""
         return np.bincount(self, minlength=minlength).astype(dtype, copy=False)
 
@@ -340,40 +340,45 @@ cdef class vector:
                 arr[postincrement(i)] = other.get(p.first)
         return result[:i]
 
-    def map(self, ufunc, *args, **kwargs):
-        """Return element-wise array of values from applying function across vectors."""
-        args = [self.apply(arg) if isinstance(arg, vector) else arg for arg in args]
-        return ufunc(np.array(self), *args, **kwargs)
-
-    def filter(self, ufunc, *args, **kwargs):
-        """Return element-wise array of keys from applying predicate across vectors."""
+    def map(self, ufunc, *args, **kwargs) -> tuple:
+        """Return parallel keys and values from applying function across vectors."""
         keys, values = self.toarrays()
         args = [self.apply(arg) if isinstance(arg, vector) else arg for arg in args]
-        return keys[ufunc(values, *args, **kwargs)]
+        return keys, ufunc(values, *args, **kwargs)
 
-    def equal(self, other: vector):
+    def filter(self, ufunc, *args, **kwargs) -> tuple:
+        """Return parallel keys and values where predicate is true.
+
+        If `ufunc` return indices, then it inherently functions as `take`.
+        """
+        keys, values = self.toarrays()
+        args = [self.apply(arg) if isinstance(arg, vector) else arg for arg in args]
+        mask = ufunc(values, *args, **kwargs)
+        return keys[mask], values[mask]
+
+    def equal(self, other: vector) -> bool:
         """Return whether vectors are equal as scalar bool; == is element-wise."""
         return self.data == other.data
 
     def __eq__(self, value):
-        return self.filter(np.equal, value)
+        return self.filter(np.equal, value)[0]
 
     def __ne__(self, value):
-        return self.filter(np.not_equal, value)
+        return self.filter(np.not_equal, value)[0]
 
     def __lt__(self, value):
-        return self.filter(np.less, value)
+        return self.filter(np.less, value)[0]
 
     def __le__(self, value):
-        return self.filter(np.less_equal, value)
+        return self.filter(np.less_equal, value)[0]
 
     def __gt__(self, value):
-        return self.filter(np.greater, value)
+        return self.filter(np.greater, value)[0]
 
     def __ge__(self, value):
-        return self.filter(np.greater_equal, value)
+        return self.filter(np.greater_equal, value)[0]
 
-    def items(self):
+    def items(self) -> Iterator:
         """Generate key and value pairs."""
         for p in self.data:
             yield p.first, p.second
@@ -384,7 +389,7 @@ cdef class vector:
             self.data.clear()
 
     @cython.boundscheck(True)
-    def toarrays(self):
+    def toarrays(self) -> tuple:
         """Return keys and values as numpy arrays."""
         keys = np.empty(len(self), np.intp)
         values = np.empty(len(self), float)
@@ -397,17 +402,10 @@ cdef class vector:
                 v[postincrement(i)] = p.second
         return keys[:i], values[:i]
 
-    @cython.boundscheck(True)
     def keys(self):
         """Deprecated: use `toarrays` or iteration instead."""
         warnings.warn("use `toarrays` or iteration instead", DeprecationWarning)
-        result = np.empty(len(self), np.intp)
-        arr: Py_ssize_t[:] = result
-        i: Py_ssize_t = 0
-        with nogil:
-            for p in self.data:
-                arr[postincrement(i)] = p.first
-        return result[:i]
+        return self.toarrays()[0]
 
     def values(self):
         """Deprecated: use `np.array` instead."""
@@ -456,12 +454,6 @@ cdef class vector:
             for key in keys:
                 self.data[key] += values
 
-    @cython.cfunc
-    def replace(self, ufunc, value):
-        keys, values = self.toarrays()
-        value = self.apply(value) if isinstance(value, vector) else value
-        return type(self)(keys, ufunc(values, value), len(self))
-
     def __neg__(self):
         keys, values = self.toarrays()
         return type(self)(keys, -values, len(self))
@@ -470,13 +462,15 @@ cdef class vector:
         keys, values = self.toarrays()
         return type(self)(keys, abs(values), len(self))
 
-    def minimum(self, value):
+    def minimum(self, value) -> Self:
         """Return element-wise minimum vector."""
-        return self.replace(np.minimum, value)
+        keys, values = self.map(np.minimum, value)
+        return type(self)(keys, values, len(self))
 
-    def maximum(self, value):
+    def maximum(self, value) -> Self:
         """Return element-wise maximum vector."""
-        return self.replace(np.maximum, value)
+        keys, values = self.map(np.maximum, value)
+        return type(self)(keys, values, len(self))
 
     cdef void imap(self, double value, double (*op)(double, double) noexcept nogil) nogil:
         with nogil:
@@ -572,7 +566,7 @@ cdef class vector:
     def __xor__(self, other: vector):
         return type(self)(self).__ixor__(other)
 
-    def difference(self, *others):
+    def difference(self, *others) -> Self:
         """Provisional set difference; return vector without keys."""
         other: indices = indices().union(*others)
         result: vector = type(self)(length_hint=max(0, len(self) - len(other)))
@@ -615,13 +609,13 @@ cdef class vector:
         return self.rop(np.power, value)
 
     @classmethod
-    def fromdense(cls, values):
+    def fromdense(cls, values) -> Self:
         """Return vector from a dense array representation."""
         values = np.asarray(values, np.double)
         keys, = np.nonzero(values)
         return cls(keys, values[keys], len(keys))
 
-    def todense(self, minlength=0, dtype=float):
+    def todense(self, minlength=0, dtype=float) -> np.ndarray:
         """Return a dense array representation of vector."""
         keys, values = self.toarrays()
         return np.bincount(keys, values, minlength).astype(dtype, copy=False)
@@ -632,7 +626,7 @@ cdef class vector:
                 initial = op(initial, p.second)
         return initial
 
-    def sum(self, initial=0.0, dtype=float, **kwargs):
+    def sum(self, initial=0.0, dtype=float, **kwargs) -> float:
         """Return sum of values."""
         return dtype(self.reduce(fadd, initial))
 
@@ -647,32 +641,35 @@ cdef class vector:
         return key, value
 
     @cython.boundscheck(True)
-    def min(self, initial=None, **kwargs):
+    def min(self, initial=None, **kwargs) -> double:
         """Return minimum value."""
         return self.argcmp(flt)[1] if initial is None else self.reduce(fmin, initial)
 
     @cython.boundscheck(True)
-    def max(self, initial=None, **kwargs):
+    def max(self, initial=None, **kwargs) -> double:
         """Return maximum value."""
         return self.argcmp(fgt)[1] if initial is None else self.reduce(fmax, initial)
 
     @cython.boundscheck(True)
-    def argmin(self, **kwargs):
+    def argmin(self, **kwargs) -> Py_ssize_t:
         """Return key with minimum value."""
         return self.argcmp(flt)[0]
 
     @cython.boundscheck(True)
-    def argmax(self, **kwargs):
+    def argmax(self, **kwargs) -> Py_ssize_t:
         """Return key with maximum value."""
         return self.argcmp(fgt)[0]
 
-    def argpartition(self, kth, **kwargs):
+    def argpartition(self, kth, **kwargs) -> np.ndarray:
         """Return keys partitioned by values."""
-        return self.filter(np.argpartition, kth, **kwargs)
+        keys, values = self.toarrays()
+        return keys[np.argpartition(values, kth, **kwargs)]
 
-    def argsort(self, **kwargs):
+    def argsort(self, **kwargs) -> np.ndarray:
         """Return keys sorted by values."""
-        return self.filter(np.argsort, **kwargs)
+        keys, values = self.toarrays()
+        return keys[np.argsort(values, **kwargs)]
 
     def nonzero(self):
-        return self.filter(np.nonzero),
+        keys, values = self.toarrays()
+        return (keys[np.nonzero(values)[0]],)

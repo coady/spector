@@ -127,10 +127,10 @@ def test_ufunc():
     vec = vector({0: -1.0, 1: 0.0, 2: 1.0})
     assert (-vec).equal(vector({0: 1, 1: 0, 2: -1}))
     assert abs(vec).equal(vector({0: 1, 1: 0, 2: 1}))
-    assert set(vec.map(np.minimum, 0)) == {-1.0, 0.0}
-    assert set(vec.map(np.maximum, -vec)) == {0.0, 1.0}
-    assert set(vec.filter(np.equal, 0.0)) == {1}
-    assert set(vec.filter(np.equal, abs(vec))) == {1, 2}
+    assert vector(*vec.map(np.minimum, 0)).equal(vector({0: -1.0, 1: 0.0, 2: 0.0}))
+    assert vector(*vec.map(np.maximum, -vec)).equal(vector({0: 1.0, 1: 0.0, 2: 1.0}))
+    assert vector(*vec.filter(np.equal, 0.0)).equal(vector({1: 0.0}))
+    assert vector(*vec.filter(np.equal, abs(vec))).equal(vector({1: 0.0, 2: 1.0}))
 
 
 def test_sets():
