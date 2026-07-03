@@ -178,9 +178,9 @@ cdef class indices:
 
     def intersection(self, *others) -> Self:
         """Return the intersection of sets as a new set."""
-        result = self
-        for other in sorted(others, key=operator.length_hint):
-            if isinstance(other, indices) and len(other) >= len(result):
+        result, *others = sorted((self,) + others, key=operator.length_hint)
+        for other in others:
+            if isinstance(other, indices):
                 result = (<indices> other).select(asiarray(result), 1)
             else:
                 result = asindices(result).select(asiarray(other), 1)
@@ -254,16 +254,13 @@ cdef class indices:
                 total += <size_t> other.data.count(k)
         return total
 
-    def dot(self, *others) -> size_t:
+    def dot(self, *others) -> int:
         """Return the intersection count of sets."""
-        others = sorted(others, key=operator.length_hint)
         if not others:
             return len(self)
-        if not isinstance(others[-1], indices):
-            return len(self.intersection(*others))
-        if len(others) > 1:
-            self = self.intersection(*others[:-1])
-        return self @ others[-1]
+        if len(others) == 1 and isinstance(others[0], indices):
+            return self @ others[0]
+        return len(self.intersection(*others))
 
     @classmethod
     def fromdense(cls, values) -> Self:
