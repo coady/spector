@@ -91,7 +91,11 @@ cdef class indices:
         return True
 
     def __eq__(self, other):
-        return isinstance(other, indices) and len(self) == len(other) and self.all(other, 1)
+        if not isinstance(other, indices):
+            return False
+        with nogil:
+            result: bool = self.data == (<indices> other).data
+        return result
 
     def __le__(self, other: indices):
         return len(self) <= len(other) and self.all(other, 1)
@@ -250,7 +254,6 @@ cdef class indices:
                 total += <size_t> other.data.count(k)
         return total
 
-    @cython.wraparound(True)
     def dot(self, *others) -> size_t:
         """Return the intersection count of sets."""
         others = sorted(others, key=operator.length_hint)
@@ -358,7 +361,9 @@ cdef class vector:
 
     def equal(self, other: vector) -> bool:
         """Return whether vectors are equal as scalar bool; == is element-wise."""
-        return self.data == other.data
+        with nogil:
+            result: bool = self.data == other.data
+        return result
 
     def __eq__(self, value):
         return self.filter(np.equal, value)[0]
@@ -403,12 +408,10 @@ cdef class vector:
         return keys[:i], values[:i]
 
     def keys(self):
-        """Deprecated: use `toarrays` or iteration instead."""
         warnings.warn("use `toarrays` or iteration instead", DeprecationWarning)
         return self.toarrays()[0]
 
     def values(self):
-        """Deprecated: use `np.array` instead."""
         warnings.warn("use `np.array` instead", DeprecationWarning)
         return np.array(self)
 
@@ -640,22 +643,18 @@ cdef class vector:
             raise ValueError("min/max of an empty vector")
         return key, value
 
-    @cython.boundscheck(True)
     def min(self, initial=None, **kwargs) -> double:
         """Return minimum value."""
         return self.argcmp(flt)[1] if initial is None else self.reduce(fmin, initial)
 
-    @cython.boundscheck(True)
     def max(self, initial=None, **kwargs) -> double:
         """Return maximum value."""
         return self.argcmp(fgt)[1] if initial is None else self.reduce(fmax, initial)
 
-    @cython.boundscheck(True)
     def argmin(self, **kwargs) -> Py_ssize_t:
         """Return key with minimum value."""
         return self.argcmp(flt)[0]
 
-    @cython.boundscheck(True)
     def argmax(self, **kwargs) -> Py_ssize_t:
         """Return key with maximum value."""
         return self.argcmp(fgt)[0]

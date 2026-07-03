@@ -19,7 +19,7 @@ NumPy | Python | Spector
 1-dim float `numpy.array` | `dict[int, float]` | `spector.vector`
 `scipy.sparse.dok_matrix` | `dict[int, dict[int, float]]` | `spector.matrix`
 
-Indices and vectors are implemented in [Cython](https://cython.org) as hash sets and maps. All native operations are optimized and release the [GIL](https://docs.python.org/3/glossary.html#term-global-interpreter-lock).
+Indices and vectors are implemented in [Cython](https://cython.org) as hash sets and maps. All native operations are optimized and release the [GIL](https://docs.python.org/3/glossary.html#term-global-interpreter-lock). Objects are safe for concurrent reads across threads; writers must not overlap readers or other writers on the same object.
 
 * conversion between sparse `numpy` arrays
 * conversion between dense `numpy` arrays
