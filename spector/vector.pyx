@@ -8,7 +8,7 @@ import numpy as np
 import cython
 from cython import Py_ssize_t, double, size_t, void
 from cython.operator import dereference, postincrement
-from libc.math cimport fmin, fmax, pow
+from libc.math cimport fabs, fmin, fmax, pow
 from libcpp cimport bool
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
@@ -18,8 +18,16 @@ cdef inline double fadd(double x, double y) noexcept nogil:
     return x + y
 
 
+cdef inline double fsub(double x, double y) noexcept nogil:
+    return x - y
+
+
 cdef inline double fmul(double x, double y) noexcept nogil:
     return x * y
+
+
+cdef inline double fdiv(double x, double y) noexcept nogil:
+    return x / y
 
 
 cdef inline bool flt(double x, double y) noexcept nogil:
@@ -457,27 +465,51 @@ cdef class vector:
                 self.data[key] += values
 
     def __neg__(self):
-        keys, values = self.toarrays()
-        return type(self)(keys, -values, len(self))
+        result: vector = type(self)(self)
+        result.imap(-1.0, fmul)
+        return result
 
     def __abs__(self):
-        keys, values = self.toarrays()
-        return type(self)(keys, abs(values), len(self))
+        result: vector = type(self)(self)
+        with nogil:
+            it = result.data.begin()
+            while it != result.data.end():
+                dereference(it).second = fabs(dereference(it).second)
+                postincrement(it)
+        return result
 
     def minimum(self, value) -> Self:
         """Return element-wise minimum vector."""
-        keys, values = self.map(np.minimum, value)
-        return type(self)(keys, values, len(self))
+        result: vector = type(self)(self)
+        if isinstance(value, vector):
+            result.iapply(value, fmin)
+        else:
+            result.imap(value, fmin)
+        return result
 
     def maximum(self, value) -> Self:
         """Return element-wise maximum vector."""
-        keys, values = self.map(np.maximum, value)
-        return type(self)(keys, values, len(self))
+        result: vector = type(self)(self)
+        if isinstance(value, vector):
+            result.iapply(value, fmax)
+        else:
+            result.imap(value, fmax)
+        return result
 
     cdef void imap(self, double value, double (*op)(double, double) noexcept nogil) nogil:
         with nogil:
-            for p in self.data:
-                self.data[p.first] = op(p.second, value)
+            it = self.data.begin()
+            while it != self.data.end():
+                dereference(it).second = op(dereference(it).second, value)
+                postincrement(it)
+
+    cdef void iapply(self, vector other, double (*op)(double, double) noexcept nogil) nogil:
+        with nogil:
+            it = self.data.begin()
+            while it != self.data.end():
+                value = other.get(dereference(it).first)
+                dereference(it).second = op(dereference(it).second, value)
+                postincrement(it)
 
     cdef void ior(self, vector other, double (*op)(double, double) noexcept nogil) nogil:
         with nogil:
@@ -498,16 +530,20 @@ cdef class vector:
             self.imap(value, fadd)
         return self
 
-    @cython.cfunc
-    def rop(self, ufunc, value: double):
-        keys, values = self.toarrays()
-        return type(self)(keys, ufunc(value, values), len(self))
+    cdef rmap(self, double value, double (*op)(double, double) noexcept nogil):
+        result: vector = type(self)(self)
+        with nogil:
+            it = result.data.begin()
+            while it != result.data.end():
+                dereference(it).second = op(value, dereference(it).second)
+                postincrement(it)
+        return result
 
     def __add__(self, value):
         return type(self)(self).__iadd__(value)
 
     def __radd__(self, value):
-        return self.rop(np.add, value)
+        return self.rmap(value, fadd)
 
     def __isub__(self, value: double):
         return self.__iadd__(-value)
@@ -516,7 +552,7 @@ cdef class vector:
         return type(self)(self).__isub__(value)
 
     def __rsub__(self, value):
-        return self.rop(np.subtract, value)
+        return self.rmap(value, fsub)
 
     def __imul__(self, value):
         if isinstance(value, vector):
@@ -540,7 +576,7 @@ cdef class vector:
         return (<vector> self).and_(other, fmul)
 
     def __rmul__(self, value):
-        return self.rop(np.multiply, value)
+        return self.rmap(value, fmul)
 
     def __ior__(self, other: vector):
         self.ior(other, fmax)
@@ -594,7 +630,7 @@ cdef class vector:
         return type(self)(self).__itruediv__(value)
 
     def __rtruediv__(self, value):
-        return self.rop(np.true_divide, value)
+        return self.rmap(value, fdiv)
 
     def __ipow__(self, value: double):
         self.imap(value, pow)
@@ -608,7 +644,7 @@ cdef class vector:
     def __rpow__(self, value, modulo):
         if modulo is not None:
             raise TypeError("pow() with modulo unsupported")
-        return self.rop(np.power, value)
+        return self.rmap(value, pow)
 
     @classmethod
     def fromdense(cls, values) -> Self:
