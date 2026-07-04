@@ -34,6 +34,15 @@ def test_vector(keys1, keys2):
 
 
 @pytest.mark.benchmark
+def test_vector_values(keys1):
+    v = vector(keys1)
+    -v
+    abs(v)
+    v.minimum(1.0)
+    3.0 - v
+
+
+@pytest.mark.benchmark
 def test_group_hashed(keys1):
     collections.deque(groupby(keys1), maxlen=0)
 
