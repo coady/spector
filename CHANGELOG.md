@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 * Stable ABI builds
 * Copy, conversion, and `xor` optimized
 * `map` and `filter` return keys and values
+* Subscript selection returns values
 
 ### Added
 * `toarrays` method

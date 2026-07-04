@@ -296,24 +296,26 @@ cdef class vector:
         return self.data.size()
 
     def __getitem__(self, key):
+        cdef const Py_ssize_t[:] keys
         try:
             return self.get(key)
         except TypeError:
-            keys: Py_ssize_t[:] = asiarray(key)
-        result: vector = type(self)(length_hint=len(keys))
+            keys = asiarray(key)
+        result = np.empty(keys.shape[0], float)
+        arr: double[:] = result
         with nogil:
             for i in range(keys.shape[0]):
-                result.data[keys[i]] = self.get(keys[i])
+                arr[i] = self.get(keys[i])
         return result
 
     def __setitem__(self, key, value: double):
-        arr: Py_ssize_t[:] = np.repeat(asiarray(key), 1)
+        cdef const Py_ssize_t[:] arr = np.repeat(asiarray(key), 1)
         with nogil:
             for i in range(arr.shape[0]):
                 self.data[arr[i]] = value
 
     def __delitem__(self, key):
-        arr: Py_ssize_t[:] = np.repeat(asiarray(key), 1)
+        cdef const Py_ssize_t[:] arr = np.repeat(asiarray(key), 1)
         with nogil:
             for i in range(arr.shape[0]):
                 self.data.erase(arr[i])

@@ -59,9 +59,9 @@ def test_cmp():
     assert set(vec >= 1.0) == {1, 2}
     assert np.array_equal(vec > 1.0, np.array([2]))
 
-    assert vec[vec <= 1.0].equal(vector({0: 0.0, 1: 1.0}))
-    assert vec[vec >= 1.0].equal(vector({1: 1.0, 2: 2.0}))
-    assert vec[(2, 3)].equal(vector({2: 2.0, 3: 0.0}))
+    assert set(vec[vec <= 1.0]) == {0.0, 1.0}
+    assert set(vec[vec >= 1.0]) == {1.0, 2.0}
+    assert np.array_equal(vec[(2, 3)], [2.0, 0.0])
     vec[vec <= 1.0] = 1.0
     assert vec[0] == 1.0
     vec[(2, 3)] = 3.0
