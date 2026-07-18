@@ -3,6 +3,7 @@
 import operator
 import warnings
 from collections.abc import Iterator, Mapping
+from functools import partial
 
 import numpy as np
 import cython
@@ -296,17 +297,10 @@ cdef class vector:
         return self.data.size()
 
     def __getitem__(self, key):
-        cdef const Py_ssize_t[:] keys
         try:
             return self.get(key)
         except TypeError:
-            keys = asiarray(key)
-        result = np.empty(keys.shape[0], float)
-        arr: double[:] = result
-        with nogil:
-            for i in range(keys.shape[0]):
-                arr[i] = self.get(keys[i])
-        return result
+            return self.take(asiarray(key))
 
     def __setitem__(self, key, value: double):
         cdef const Py_ssize_t[:] arr = np.repeat(asiarray(key), 1)
@@ -332,20 +326,18 @@ cdef class vector:
         return dereference(it).second if it != self.data.end() else 0.0
 
     @cython.boundscheck(True)
-    @cython.cfunc
-    def apply(self, other: vector):
-        result = np.empty(len(self), float)
+    cdef take(self, const Py_ssize_t[:] keys):
+        result = np.empty(keys.shape[0], float)
         arr: double[:] = result
-        i: Py_ssize_t = 0
         with nogil:
-            for p in self.data:
-                arr[postincrement(i)] = other.get(p.first)
-        return result[:i]
+            for i in range(keys.shape[0]):
+                arr[i] = self.get(keys[i])
+        return result
 
     def map(self, ufunc, *args, **kwargs) -> tuple:
         """Return parallel keys and values from applying function across vectors."""
         keys, values = self.toarrays()
-        args = [self.apply(arg) if isinstance(arg, vector) else arg for arg in args]
+        args = [(<vector> arg).take(keys) if isinstance(arg, vector) else arg for arg in args]
         return keys, ufunc(values, *args, **kwargs)
 
     def filter(self, ufunc, *args, **kwargs) -> tuple:
@@ -354,7 +346,7 @@ cdef class vector:
         If `ufunc` return indices, then it inherently functions as `take`.
         """
         keys, values = self.toarrays()
-        args = [self.apply(arg) if isinstance(arg, vector) else arg for arg in args]
+        args = [(<vector> arg).take(keys) if isinstance(arg, vector) else arg for arg in args]
         mask = ufunc(values, *args, **kwargs)
         return keys[mask], values[mask]
 
@@ -457,12 +449,10 @@ cdef class vector:
                 self.data[key] += values
 
     def __neg__(self):
-        keys, values = self.toarrays()
-        return type(self)(keys, -values, len(self))
+        return self._apply(np.negative)
 
     def __abs__(self):
-        keys, values = self.toarrays()
-        return type(self)(keys, abs(values), len(self))
+        return self._apply(np.abs)
 
     def minimum(self, value) -> Self:
         """Return element-wise minimum vector."""
@@ -500,32 +490,26 @@ cdef class vector:
             self.imap(value, fadd)
         return self
 
-    @cython.cfunc
-    def lop(self, ufunc, value: double):
+    def _apply(self, ufunc, *args):
         keys, values = self.toarrays()
-        return type(self)(keys, ufunc(values, value), len(self))
-
-    @cython.cfunc
-    def rop(self, ufunc, value: double):
-        keys, values = self.toarrays()
-        return type(self)(keys, ufunc(value, values), len(self))
+        return type(self)(keys, ufunc(values, *args), len(self))
 
     def __add__(self, value):
         if isinstance(value, vector):
             return type(self)(self).__iadd__(value)
-        return self.lop(np.add, value)
+        return self._apply(np.add, value)
 
     def __radd__(self, value):
-        return self.rop(np.add, value)
+        return self._apply(partial(np.add, value))
 
     def __isub__(self, value: double):
         return self.__iadd__(-value)
 
     def __sub__(self, value):
-        return self.lop(np.subtract, value)
+        return self._apply(np.subtract, value)
 
     def __rsub__(self, value):
-        return self.rop(np.subtract, value)
+        return self._apply(partial(np.subtract, value))
 
     def __imul__(self, value):
         if isinstance(value, vector):
@@ -546,10 +530,10 @@ cdef class vector:
         if isinstance(value, vector):
             self, other = sorted([self, value], key=len)
             return (<vector> self).and_(other, fmul)
-        return self.lop(np.multiply, value)
+        return self._apply(np.multiply, value)
 
     def __rmul__(self, value):
-        return self.rop(np.multiply, value)
+        return self._apply(partial(np.multiply, value))
 
     def __ior__(self, other: vector):
         self.ior(other, fmax)
@@ -600,10 +584,10 @@ cdef class vector:
         return self.__imul__(1.0 / value)
 
     def __truediv__(self, value):
-        return self.lop(np.true_divide, value)
+        return self._apply(np.true_divide, value)
 
     def __rtruediv__(self, value):
-        return self.rop(np.true_divide, value)
+        return self._apply(partial(np.true_divide, value))
 
     def __ipow__(self, value: double):
         self.imap(value, pow)
@@ -612,12 +596,12 @@ cdef class vector:
     def __pow__(self, value, modulo):
         if modulo is not None:
             raise TypeError("pow() with modulo unsupported")
-        return self.lop(np.power, value)
+        return self._apply(np.power, value)
 
     def __rpow__(self, value, modulo):
         if modulo is not None:
             raise TypeError("pow() with modulo unsupported")
-        return self.rop(np.power, value)
+        return self._apply(partial(np.power, value))
 
     @classmethod
     def fromdense(cls, values) -> Self:
