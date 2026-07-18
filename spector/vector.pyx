@@ -501,12 +501,19 @@ cdef class vector:
         return self
 
     @cython.cfunc
+    def lop(self, ufunc, value: double):
+        keys, values = self.toarrays()
+        return type(self)(keys, ufunc(values, value), len(self))
+
+    @cython.cfunc
     def rop(self, ufunc, value: double):
         keys, values = self.toarrays()
         return type(self)(keys, ufunc(value, values), len(self))
 
     def __add__(self, value):
-        return type(self)(self).__iadd__(value)
+        if isinstance(value, vector):
+            return type(self)(self).__iadd__(value)
+        return self.lop(np.add, value)
 
     def __radd__(self, value):
         return self.rop(np.add, value)
@@ -515,7 +522,7 @@ cdef class vector:
         return self.__iadd__(-value)
 
     def __sub__(self, value):
-        return type(self)(self).__isub__(value)
+        return self.lop(np.subtract, value)
 
     def __rsub__(self, value):
         return self.rop(np.subtract, value)
@@ -536,10 +543,10 @@ cdef class vector:
         return result
 
     def __mul__(self, value):
-        if not isinstance(value, vector):
-            return type(self)(self).__imul__(value)
-        self, other = sorted([self, value], key=len)
-        return (<vector> self).and_(other, fmul)
+        if isinstance(value, vector):
+            self, other = sorted([self, value], key=len)
+            return (<vector> self).and_(other, fmul)
+        return self.lop(np.multiply, value)
 
     def __rmul__(self, value):
         return self.rop(np.multiply, value)
@@ -593,7 +600,7 @@ cdef class vector:
         return self.__imul__(1.0 / value)
 
     def __truediv__(self, value):
-        return type(self)(self).__itruediv__(value)
+        return self.lop(np.true_divide, value)
 
     def __rtruediv__(self, value):
         return self.rop(np.true_divide, value)
@@ -605,7 +612,7 @@ cdef class vector:
     def __pow__(self, value, modulo):
         if modulo is not None:
             raise TypeError("pow() with modulo unsupported")
-        return type(self)(self).__ipow__(value)
+        return self.lop(np.power, value)
 
     def __rpow__(self, value, modulo):
         if modulo is not None:

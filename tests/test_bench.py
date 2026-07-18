@@ -39,7 +39,8 @@ def test_vector_values(keys1):
     -v
     abs(v)
     v.minimum(1.0)
-    3.0 - v
+    v - 1.0
+    1.0 - v
 
 
 @pytest.mark.benchmark
