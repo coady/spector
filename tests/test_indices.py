@@ -75,8 +75,14 @@ def test_sets():
     assert z is x and z == indices([0, 1, 2])
     z -= y
     assert z is x and z == indices([0])
-    z -= y  # smaller vector is iterated
-    assert z is not x
+
+    z = indices([0, 1, 2])
+    z &= indices([0, 1])
+    assert z == indices([0, 1])
+    z &= y
+    assert z == indices([1])
+    z -= y
+    assert not z
 
 
 def test_dense():

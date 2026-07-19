@@ -151,6 +151,8 @@ def test_sets():
     assert vec.equal(vector({2: 1.0, 3: 1.0}))
     vec ^= other
     assert vec.equal(vector({1: 0.0}))
+    vec &= vector({2: 1.0})
+    assert not vec
 
 
 def test_reduce():

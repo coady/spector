@@ -223,6 +223,16 @@ cdef class indices:
         return type(self)(self).__ixor__(other)
 
     @cython.cfunc
+    def ifilter(self, other: indices, count: size_t):
+        with nogil:
+            it = self.data.begin()
+            while it != self.data.end():
+                if other.data.count(dereference(it)) == count:
+                    postincrement(it)
+                else:
+                    it = self.data.erase(it)
+
+    @cython.cfunc
     def filter(self, other: indices, count: size_t):
         result: indices = type(self)(length_hint=not count and max(0, len(self) - len(other)))
         with nogil:
@@ -231,22 +241,29 @@ cdef class indices:
                     result.data.insert(k)
         return result
 
-    def __and__(self: indices, other: indices):
+    def __iand__(self, other: indices):
+        if len(self) > len(other):
+            return other.filter(self, 1)
+        self.ifilter(other, 1)
+        return self
+
+    def __and__(self, other: indices):
         self, other = sorted([self, other], key=len)
         return self.filter(other, 1)
 
-    def __isub__(self, indices other):
-        if len(self) < len(other):
-            return self - other
-        with nogil:
-            for k in other.data:
-                self.data.erase(k)
+    def __isub__(self, other: indices):
+        if len(self) > len(other):
+            with nogil:
+                for k in other.data:
+                    self.data.erase(k)
+        else:
+            self.ifilter(other, 0)
         return self
 
-    def __sub__(self: indices, other: indices):
+    def __sub__(self, other: indices):
         return self.filter(other, 0)
 
-    def __matmul__(self: indices, other: indices):
+    def __matmul__(self, other: indices):
         """Return binary dot product, i.e., intersection count."""
         self, other = sorted([self, other], key=len)
         total: size_t = 0
@@ -511,10 +528,24 @@ cdef class vector:
     def __rsub__(self, value):
         return self._apply(partial(np.subtract, value))
 
+    cdef iand(self, vector other, double (*op)(double, double) noexcept nogil):
+        with nogil:
+            it = self.data.begin()
+            while it != self.data.end():
+                oit = other.data.find(dereference(it).first)
+                if oit != other.data.end():
+                    dereference(it).second = op(dereference(it).second, dereference(oit).second)
+                    postincrement(it)
+                else:
+                    it = self.data.erase(it)
+
     def __imul__(self, value):
-        if isinstance(value, vector):
-            return self * value
-        self.imap(value, fmul)
+        if not isinstance(value, vector):
+            self.imap(value, fmul)
+        elif len(self) > len(value):
+            return (<vector> value).and_(self, fmul)
+        else:
+            self.iand(value, fmul)
         return self
 
     cdef and_(self, vector other, double (*op)(double, double) noexcept nogil):
@@ -542,7 +573,13 @@ cdef class vector:
     def __or__(self, other: vector):
         return type(self)(self).__ior__(other)
 
-    def __and__(self: vector, other: vector):
+    def __iand__(self, other: vector):
+        if len(self) > len(other):
+            return other.and_(self, fmin)
+        self.iand(other, fmin)
+        return self
+
+    def __and__(self, other: vector):
         self, other = sorted([self, other], key=len)
         return self.and_(other, fmin)
 
@@ -571,7 +608,7 @@ cdef class vector:
                     result.data[p.first] = p.second
         return result
 
-    def __matmul__(self: vector, other: vector):
+    def __matmul__(self, other: vector):
         """Return vector dot product."""
         self, other = sorted([self, other], key=len)
         total: double = 0.0
