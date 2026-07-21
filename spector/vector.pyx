@@ -4,6 +4,7 @@ import operator
 import warnings
 from collections.abc import Iterator, Mapping
 from functools import partial
+from typing import Self
 
 import numpy as np
 import cython
@@ -342,9 +343,8 @@ cdef class vector:
         it = self.data.find(key)
         return dereference(it).second if it != self.data.end() else 0.0
 
-    @cython.boundscheck(True)
     cdef take(self, const Py_ssize_t[:] keys):
-        result = np.empty(keys.shape[0], float)
+        result = np.empty(keys.size, float)
         arr: double[:] = result
         with nogil:
             for i in range(keys.shape[0]):
