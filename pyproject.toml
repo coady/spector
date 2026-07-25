@@ -41,11 +41,9 @@ spector = ["*.pyx"]
 [tool.ruff]
 line-length = 100
 
-[tool.ruff.lint]
-extend-select = ["I"]
-
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"test_*.py" = ["B", "PLR0124", "SIM"]
 
 [tool.ty.rules]
 unresolved-import = "ignore"
