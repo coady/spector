@@ -85,7 +85,7 @@ cdef class indices:
     def __iter__(self):
         return iter(self.data)
 
-    cdef bool all(self, other: indices, count: size_t) noexcept nogil:
+    cdef bool all(self, other: indices, count: size_t):
         with nogil:
             for k in self.data:
                 if other.data.count(k) != count:
@@ -138,12 +138,12 @@ cdef class indices:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
-    cdef void fromarray(self, const Py_ssize_t[:] keys) nogil:
+    cdef void fromarray(self, const Py_ssize_t[:] keys):
         with nogil:
             for i in range(keys.shape[0]):
                 self.data.insert(keys[i])
 
-    cdef void fromvector(self, vector vec) nogil:
+    cdef void fromvector(self, vector vec):
         with nogil:
             self.resize(vec.data.size())
             for p in vec.data:
@@ -438,12 +438,12 @@ cdef class vector:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
-    cdef void fromarrays(self, const Py_ssize_t[:] keys, const double[:] values) nogil:
+    cdef void fromarrays(self, const Py_ssize_t[:] keys, const double[:] values):
         with nogil:
             for i in range(min(keys.shape[0], values.shape[0])):
                 self.data[keys[i]] += values[i]
 
-    cdef void fromindices(self, indices ind, double value) nogil:
+    cdef void fromindices(self, indices ind, double value):
         with nogil:
             self.resize(ind.data.size())
             for p in ind.data:
@@ -481,14 +481,14 @@ cdef class vector:
         keys, values = self.map(np.maximum, value)
         return type(self)(keys, values, len(self))
 
-    cdef void imap(self, double value, double (*op)(double, double) noexcept nogil) nogil:
+    cdef void imap(self, double value, double (*op)(double, double) noexcept nogil):
         with nogil:
             it = self.data.begin()
             while it != self.data.end():
                 dereference(it).second = op(dereference(it).second, value)
                 postincrement(it)
 
-    cdef void ior(self, vector other, double (*op)(double, double) noexcept nogil) nogil:
+    cdef void ior(self, vector other, double (*op)(double, double) noexcept nogil):
         with nogil:
             if self.data.empty():
                 self.data = other.data
@@ -652,7 +652,7 @@ cdef class vector:
         keys, values = self.toarrays()
         return np.bincount(keys, values, minlength).astype(dtype, copy=False)
 
-    cdef double reduce(self, double (*op)(double, double) noexcept nogil, double initial) nogil:
+    cdef double reduce(self, double (*op)(double, double) noexcept nogil, double initial):
         with nogil:
             for p in self.data:
                 initial = op(initial, p.second)

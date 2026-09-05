@@ -13,7 +13,7 @@ def arggroupby(values: Iterable) -> Iterator[tuple]:
     """Generate unique keys with corresponding index arrays."""
     values = np.asarray(values)
     keys, counts = np.unique(values, return_counts=True)
-    return zip(keys, np.split(np.argsort(values), np.cumsum(counts)))
+    return zip(keys.tolist(), np.split(np.argsort(values), np.cumsum(counts)))
 
 
 def groupby(keys: Iterable, *arrays) -> Iterator[tuple]:
