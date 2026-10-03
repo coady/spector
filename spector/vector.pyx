@@ -138,12 +138,12 @@ cdef class indices:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
-    cdef void fromarray(self, const Py_ssize_t[:] keys):
+    cdef fromarray(self, const Py_ssize_t[:] keys):
         with nogil:
             for i in range(keys.shape[0]):
                 self.data.insert(keys[i])
 
-    cdef void fromvector(self, vector vec):
+    cdef fromvector(self, vector vec):
         with nogil:
             self.resize(vec.data.size())
             for p in vec.data:
@@ -188,12 +188,12 @@ cdef class indices:
                 result = asindices(result).select(asiarray(other), 1)
         return type(self)(result, len(result))
 
-    def difference(self, *others) -> indices:
+    def difference(self, *others) -> Self:
         """Return the difference of sets as a new set."""
         result = np.asarray(self)
         for other in sorted(others, key=operator.length_hint, reverse=True):
             result = asindices(other).select(result, 0)
-        return asindices(result)
+        return type(self)(result, len(result))
 
     def __ior__(self, other: indices):
         with nogil:
@@ -223,8 +223,7 @@ cdef class indices:
     def __xor__(self, other: indices):
         return type(self)(self).__ixor__(other)
 
-    @cython.cfunc
-    def ifilter(self, other: indices, count: size_t):
+    cdef ifilter(self, other: indices, count: size_t):
         with nogil:
             it = self.data.begin()
             while it != self.data.end():
@@ -233,8 +232,7 @@ cdef class indices:
                 else:
                     it = self.data.erase(it)
 
-    @cython.cfunc
-    def filter(self, other: indices, count: size_t):
+    cdef filter(self, other: indices, count: size_t):
         result: indices = type(self)(length_hint=not count and max(0, len(self) - len(other)))
         with nogil:
             for k in self.data:
@@ -438,12 +436,12 @@ cdef class vector:
         if count >= (self.data.bucket_count() * 2):
             self.data.reserve(count)
 
-    cdef void fromarrays(self, const Py_ssize_t[:] keys, const double[:] values):
+    cdef fromarrays(self, const Py_ssize_t[:] keys, const double[:] values):
         with nogil:
             for i in range(min(keys.shape[0], values.shape[0])):
                 self.data[keys[i]] += values[i]
 
-    cdef void fromindices(self, indices ind, double value):
+    cdef fromindices(self, indices ind, double value):
         with nogil:
             self.resize(ind.data.size())
             for p in ind.data:
@@ -481,14 +479,14 @@ cdef class vector:
         keys, values = self.map(np.maximum, value)
         return type(self)(keys, values, len(self))
 
-    cdef void imap(self, double value, double (*op)(double, double) noexcept nogil):
+    cdef imap(self, double value, double (*op)(double, double) noexcept nogil):
         with nogil:
             it = self.data.begin()
             while it != self.data.end():
                 dereference(it).second = op(dereference(it).second, value)
                 postincrement(it)
 
-    cdef void ior(self, vector other, double (*op)(double, double) noexcept nogil):
+    cdef ior(self, vector other, double (*op)(double, double) noexcept nogil):
         with nogil:
             if self.data.empty():
                 self.data = other.data
