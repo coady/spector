@@ -1,7 +1,6 @@
 # distutils: language=c++
 # cython: language_level=3, boundscheck=False, wraparound=False
 import operator
-import warnings
 from collections.abc import Iterator, Mapping
 from functools import partial
 from typing import Self
@@ -412,14 +411,6 @@ cdef class vector:
                 k[i] = p.first
                 v[postincrement(i)] = p.second
         return keys[:i], values[:i]
-
-    def keys(self):
-        warnings.warn("use `toarrays` or iteration instead", DeprecationWarning)
-        return self.toarrays()[0]
-
-    def values(self):
-        warnings.warn("use `np.array` instead", DeprecationWarning)
-        return np.array(self)
 
     @cython.boundscheck(True)
     def __array__(self, dtype=float, copy=None):

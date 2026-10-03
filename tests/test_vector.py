@@ -30,8 +30,6 @@ def test_basic():
     vec = vector(vector(range(3), 2.0))
     assert np.array_equal(vec, [2.0, 2.0, 2.0])
     vec = vector({0: 0.0, 1: 1.0})
-    with pytest.warns(DeprecationWarning):
-        assert set(vec.values()) == {0.0, 1.0}
     vec.update(vector([1, 2]))
     assert dict(vec.items()) == {0: 0.0, 1: 2.0, 2: 1.0}
     assert vector(np.array([False]), np.array(["0"]))
@@ -74,8 +72,6 @@ def test_cmp():
 
 def test_dense():
     vec = vector.fromdense(range(4))
-    with pytest.warns(DeprecationWarning):
-        assert dict(vec) == {1: 1, 2: 2, 3: 3}
     assert np.array_equal(vec.todense(), np.arange(4, dtype=float))
     assert list(vec.todense(5)) == [0, 1, 2, 3, 0]
 
