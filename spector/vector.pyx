@@ -2,25 +2,36 @@
 # cython: language_level=3, boundscheck=False, wraparound=False
 import operator
 from collections.abc import Iterator, Mapping
-from functools import partial
 from typing import Self
 
 import numpy as np
 import cython
 from cython import Py_ssize_t, double, size_t, void
 from cython.operator import dereference, postincrement
-from libc.math cimport fmin, fmax, pow
+from libc.math cimport fabs, fmin, fmax, pow
 from libcpp cimport bool
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
+
+
+cdef inline double fneg(double x) noexcept nogil:
+    return -x
 
 
 cdef inline double fadd(double x, double y) noexcept nogil:
     return x + y
 
 
+cdef inline double fsub(double x, double y) noexcept nogil:
+    return x - y
+
+
 cdef inline double fmul(double x, double y) noexcept nogil:
     return x * y
+
+
+cdef inline double fdiv(double x, double y) noexcept nogil:
+    return x / y
 
 
 cdef inline bool flt(double x, double y) noexcept nogil:
@@ -454,11 +465,20 @@ cdef class vector:
             for key in keys:
                 self.data[key] += values
 
+    cdef umap(self, double (*op)(double) noexcept nogil):
+        result: vector = type(self)(self)
+        with nogil:
+            it = result.data.begin()
+            while it != result.data.end():
+                dereference(it).second = op(dereference(it).second)
+                postincrement(it)
+        return result
+
     def __neg__(self):
-        return self._apply(np.negative)
+        return self.umap(fneg)
 
     def __abs__(self):
-        return self._apply(np.abs)
+        return self.umap(fabs)
 
     def minimum(self, value) -> Self:
         """Return element-wise minimum vector."""
@@ -496,26 +516,29 @@ cdef class vector:
             self.imap(value, fadd)
         return self
 
-    def _apply(self, ufunc, *args):
-        keys, values = self.toarrays()
-        return type(self)(keys, ufunc(values, *args), len(self))
-
     def __add__(self, value):
-        if isinstance(value, vector):
-            return type(self)(self).__iadd__(value)
-        return self._apply(np.add, value)
+        return type(self)(self).__iadd__(value)
+
+    cdef rmap(self, double left, double (*op)(double, double) noexcept nogil):
+        result: vector = type(self)(self)
+        with nogil:
+            it = result.data.begin()
+            while it != result.data.end():
+                dereference(it).second = op(left, dereference(it).second)
+                postincrement(it)
+        return result
 
     def __radd__(self, value):
-        return self._apply(partial(np.add, value))
+        return self.rmap(value, fadd)
 
     def __isub__(self, value: double):
         return self.__iadd__(-value)
 
     def __sub__(self, value):
-        return self._apply(np.subtract, value)
+        return type(self)(self).__isub__(value)
 
     def __rsub__(self, value):
-        return self._apply(partial(np.subtract, value))
+        return self.rmap(value, fsub)
 
     cdef iand(self, vector other, double (*op)(double, double) noexcept nogil):
         with nogil:
@@ -550,10 +573,10 @@ cdef class vector:
         if isinstance(value, vector):
             self, other = sorted([self, value], key=len)
             return (<vector> self).and_(other, fmul)
-        return self._apply(np.multiply, value)
+        return type(self)(self).__imul__(value)
 
     def __rmul__(self, value):
-        return self._apply(partial(np.multiply, value))
+        return self.rmap(value, fmul)
 
     def __ior__(self, other: vector):
         self.ior(other, fmax)
@@ -610,10 +633,10 @@ cdef class vector:
         return self.__imul__(1.0 / value)
 
     def __truediv__(self, value):
-        return self._apply(np.true_divide, value)
+        return type(self)(self).__itruediv__(value)
 
     def __rtruediv__(self, value):
-        return self._apply(partial(np.true_divide, value))
+        return self.rmap(value, fdiv)
 
     def __ipow__(self, value: double):
         self.imap(value, pow)
@@ -622,12 +645,12 @@ cdef class vector:
     def __pow__(self, value, modulo):
         if modulo is not None:
             raise TypeError("pow() with modulo unsupported")
-        return self._apply(np.power, value)
+        return type(self)(self).__ipow__(value)
 
     def __rpow__(self, value, modulo):
         if modulo is not None:
             raise TypeError("pow() with modulo unsupported")
-        return self._apply(partial(np.power, value))
+        return self.rmap(value, pow)
 
     @classmethod
     def fromdense(cls, values) -> Self:
