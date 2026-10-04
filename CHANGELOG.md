@@ -5,10 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 ### Changed
+* Ufuncs return vectors
 * Mapping scalars optimized
 
 ### Removed
 * `keys` and `values`
+
+### Deprecated
+* `minimum` and `maximum` replaced with ufuncs
 
 ## [1.7](https://pypi.org/project/spector/1.7/) - 2026-07-20
 ### Changed

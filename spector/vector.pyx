@@ -1,6 +1,7 @@
 # distutils: language=c++
 # cython: language_level=3, boundscheck=False, wraparound=False
 import operator
+import warnings
 from collections.abc import Iterator, Mapping
 from typing import Self
 
@@ -480,15 +481,23 @@ cdef class vector:
     def __abs__(self):
         return self.umap(fabs)
 
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        if inputs[0] is self and kwargs.get("out") is None:
+            match method:
+                case "__call__":
+                    keys, values = self.map(ufunc, *inputs[1:], **kwargs)
+                    return type(self)(keys, values, len(self))
+                case "reduce":
+                    return ufunc.reduce(np.asarray(self), *inputs[1:], **kwargs)
+        return NotImplemented
+
     def minimum(self, value) -> Self:
-        """Return element-wise minimum vector."""
-        keys, values = self.map(np.minimum, value)
-        return type(self)(keys, values, len(self))
+        warnings.warn("use `np.minimum` or `&` instead", DeprecationWarning)
+        return np.minimum(self, value)
 
     def maximum(self, value) -> Self:
-        """Return element-wise maximum vector."""
-        keys, values = self.map(np.maximum, value)
-        return type(self)(keys, values, len(self))
+        warnings.warn("use `np.maximum` or `|` instead", DeprecationWarning)
+        return np.maximum(self, value)
 
     cdef imap(self, double value, double (*op)(double, double) noexcept nogil):
         with nogil:

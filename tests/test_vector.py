@@ -123,10 +123,13 @@ def test_ufunc():
     vec = vector({0: -1.0, 1: 0.0, 2: 1.0})
     assert (-vec).equal(vector({0: 1, 1: 0, 2: -1}))
     assert abs(vec).equal(vector({0: 1, 1: 0, 2: 1}))
-    assert vector(*vec.map(np.minimum, 0)).equal(vector({0: -1.0, 1: 0.0, 2: 0.0}))
-    assert vector(*vec.map(np.maximum, -vec)).equal(vector({0: 1.0, 1: 0.0, 2: 1.0}))
+    assert np.minimum(vec, 0).equal(vector({0: -1.0, 1: 0.0, 2: 0.0}))
+    assert np.maximum(vec, -vec).equal(vector({0: 1.0, 1: 0.0, 2: 1.0}))
+    with pytest.raises(TypeError):
+        np.minimum(0, vec)  # inputs[0] is not self
     assert vector(*vec.filter(np.equal, 0.0)).equal(vector({1: 0.0}))
     assert vector(*vec.filter(np.equal, abs(vec))).equal(vector({1: 0.0, 2: 1.0}))
+    assert np.prod(vec) == 0.0
 
 
 def test_sets():
@@ -135,8 +138,10 @@ def test_sets():
     assert (vec | other).equal(vector({0: 1.0, 1: 1.0, 2: 2.0, 3: 1.0}))
     assert (vec & other).equal(vector({1: 0.0, 2: 1.0}))
     assert not vec & vector()
-    assert vec.maximum(other).equal(vector({0: 1.0, 1: 1.0, 2: 2.0}))
-    assert vec.minimum(other).equal(vector({0: 0.0, 1: 0.0, 2: 1.0}))
+    with pytest.warns(DeprecationWarning):
+        assert vec.maximum(other).equal(vector({0: 1.0, 1: 1.0, 2: 2.0}))
+    with pytest.warns(DeprecationWarning):
+        assert vec.minimum(other).equal(vector({0: 0.0, 1: 0.0, 2: 1.0}))
     assert (vec ^ other).equal(vector({0: 1.0, 3: 1.0}))
     assert (vector() ^ vec).equal(vec)
     assert vec.difference(other, ()).equal(vector({0: 1.0}))
