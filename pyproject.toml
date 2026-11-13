@@ -7,7 +7,7 @@ name = "spector"
 version = "1.7"
 description = "Sparse vectors."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = "Apache-2.0"
 authors = [{name = "A. Coady"}]
 keywords = ["sparse", "array", "vector", "matrix", "numpy", "scipy"]
@@ -17,7 +17,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
