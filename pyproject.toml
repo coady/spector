@@ -47,7 +47,7 @@ line-length = 100
 "test_*.py" = ["B", "PLR0124", "SIM"]
 
 [tool.ty.rules]
-unresolved-import = "ignore"
+import-not-found = "ignore"
 
 [tool.coverage.run]
 source = ["spector"]

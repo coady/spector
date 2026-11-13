@@ -154,7 +154,7 @@ cdef class indices:
             for i in range(keys.shape[0]):
                 self.data.insert(keys[i])
 
-    cdef fromvector(self, vector vec):
+    cdef fromvector(self, vec: vector):
         with nogil:
             self.resize(vec.data.size())
             for p in vec.data:
@@ -174,10 +174,10 @@ cdef class indices:
 
     def union(self, *others) -> Self:
         """Return the union of sets as a new set."""
-        self = type(self)(self)
+        result = type(self)(self)
         for other in others:
-            self.update(other)
-        return self
+            result.update(other)
+        return result
 
     cdef select(self, const Py_ssize_t[:] keys, size_t count):
         result = np.empty(keys.size, np.intp)
@@ -243,7 +243,7 @@ cdef class indices:
                 else:
                     it = self.data.erase(it)
 
-    cdef filter(self, other: indices, count: size_t):
+    cdef indices filter(self, other: indices, count: size_t):
         result: indices = type(self)(length_hint=not count and max(0, len(self) - len(other)))
         with nogil:
             for k in self.data:
@@ -253,8 +253,9 @@ cdef class indices:
 
     def __iand__(self, other: indices):
         if len(self) > len(other):
-            return other.filter(self, 1)
-        self.ifilter(other, 1)
+            self.data.swap(other.filter(self, 1).data)
+        else:
+            self.ifilter(other, 1)
         return self
 
     def __and__(self, other: indices):
@@ -444,7 +445,7 @@ cdef class vector:
             for i in range(min(keys.shape[0], values.shape[0])):
                 self.data[keys[i]] += values[i]
 
-    cdef fromindices(self, indices ind, double value):
+    cdef fromindices(self, ind: indices, value: double):
         with nogil:
             self.resize(ind.data.size())
             for p in ind.data:
@@ -488,7 +489,7 @@ cdef class vector:
                     keys, values = self.map(ufunc, *inputs[1:], **kwargs)
                     return type(self)(keys, values, len(self))
                 case "reduce":
-                    return ufunc.reduce(np.asarray(self), *inputs[1:], **kwargs)
+                    return float(ufunc.reduce(np.asarray(self), *inputs[1:], **kwargs))
         return NotImplemented
 
     def minimum(self, value) -> Self:
@@ -564,12 +565,12 @@ cdef class vector:
         if not isinstance(value, vector):
             self.imap(value, fmul)
         elif len(self) > len(value):
-            return (<vector> value).and_(self, fmul)
+            self.data.swap((<vector> value).and_(self, fmul).data)
         else:
             self.iand(value, fmul)
         return self
 
-    cdef and_(self, vector other, double (*op)(double, double) noexcept nogil):
+    cdef vector and_(self, vector other, double (*op)(double, double) noexcept nogil):
         result: vector = type(self)()
         with nogil:
             for p in self.data:
@@ -596,8 +597,9 @@ cdef class vector:
 
     def __iand__(self, other: vector):
         if len(self) > len(other):
-            return other.and_(self, fmin)
-        self.iand(other, fmin)
+            self.data.swap(other.and_(self, fmin).data)
+        else:
+            self.iand(other, fmin)
         return self
 
     def __and__(self, other: vector):
